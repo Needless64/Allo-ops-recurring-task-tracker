@@ -247,7 +247,7 @@
           '<h2>' + (editing ? 'Edit task' : 'New task') + '</h2>' +
           '<p class="hint">' + (editing
             ? 'Changes apply to future cycles; an open cycle keeps its current due time.'
-            : 'A new task gets its first cycle immediately.') + '</p>' +
+            : 'A new task starts active and gets its first cycle immediately. Task IDs are unique — use Pause on an existing task instead of creating a second one.') + '</p>' +
           '<div id="formMsg"></div>' +
           '<label for="fId">Task ID</label>' +
           '<input id="fId" type="text" maxlength="40" placeholder="T-OPS-01" value="' + esc(t.id) + '"' +
@@ -285,7 +285,9 @@
             : '') +
           '<label for="fNotes">Instructions</label>' +
           '<textarea id="fNotes" maxlength="500" placeholder="What exactly should the employee do?">' + esc(t.notes) + '</textarea>' +
-          '<label class="check"><input id="fActive" type="checkbox"' + (t.active ? ' checked' : '') + '> Active</label>' +
+          (editing
+            ? '<label class="check"><input id="fActive" type="checkbox"' + (t.active ? ' checked' : '') + '> Active</label>'
+            : '') +
           '<div class="actions"><button class="btn primary" id="saveTask" type="button">' + (editing ? 'Save task' : 'Create task') + '</button>' +
             '<button class="btn" id="cancelTask" type="button">Cancel</button></div>';
 
@@ -322,7 +324,11 @@
           escalationRule: $('#fEsc').value,
           ownerManager: owner ? owner.value.trim() : '',
           notes: $('#fNotes').value.trim(),
-          active: activeOverride == null ? $('#fActive').checked : activeOverride
+          originalId: STATE.editing || '',
+          // No Active checkbox on the New task form: a new task always starts
+          // active, so it must not inherit a leftover unchecked state.
+          active: activeOverride != null ? activeOverride
+            : ($('#fActive') ? $('#fActive').checked : true)
         };
       }
 
@@ -357,7 +363,8 @@
         var task = (STATE.ctx.tasks || []).filter(function (t) { return t.id === id; })[0];
         if (!task) return;
         var payload = {
-          id: task.id, name: task.name, email: task.email, employee: task.employee,
+          id: task.id, originalId: task.id,
+          name: task.name, email: task.email, employee: task.employee,
           frequency: task.frequency, anchorIso: task.anchorIso, dueTime: task.dueTime,
           grace: task.grace, requiresTicket: task.requiresTicket,
           ticketPattern: task.ticketPattern, proofLabel: task.proofLabel,

@@ -65,12 +65,18 @@ Managers can assign recurring tasks to their own team from the workspace's **Ass
 a tab; assignment is rejected for anyone outside their reporting line. Admins can assign to anyone, create
 holidays and change `Config` from **Manage tasks & settings**.
 
-A `TaskID` is unique in `TaskMaster`, compared case-insensitively: saving `daily12` when `Daily12` exists
-updates that row and keeps its stored spelling, because `Cycles.TaskID` joins back on it. Two rows with one
-ID would leave `taskMap_` using only one definition while `reconcileCycles_` raised a cycle for each. Rows
-that already collide are cleared by **Allo Ops → Admin → Remove duplicate task IDs**, which keeps the first
-row per ID, writes the deleted row's contents to `AuditLog` as `TASK_DUPLICATE_REMOVED`, and cancels `OPEN`
-cycles that repeat a `CycleID` as `CYCLE_DUPLICATE_CANCELLED`.
+A `TaskID` is unique in `TaskMaster`, compared case-insensitively. Creating a task under an ID that
+already exists is refused: the form shows `Task ID "X" is already used by "…"` and the attempt is written
+to `AuditLog` as `TASK_DUPLICATE_BLOCKED`. The existing row is never rewritten, and the stored spelling is
+kept, because `Cycles.TaskID` joins back on it. Two rows with one ID would leave `taskMap_` using only one
+definition while `reconcileCycles_` raised a cycle for each. Rows that already collide are cleared by
+**Allo Ops → Admin → Remove duplicate task IDs**, which keeps the first row per ID, writes the deleted
+row's contents to `AuditLog` as `TASK_DUPLICATE_REMOVED`, and cancels `OPEN` cycles that repeat a
+`CycleID` as `CYCLE_DUPLICATE_CANCELLED`.
+
+A task created from the panel always starts active, so its first cycle is raised immediately. **Active** is
+an edit-time setting: untick it, or press **Pause** on the task card, to stop an existing task producing
+cycles.
 
 `Config` (protected):
 
@@ -281,9 +287,10 @@ OPEN --grace passes--> MISSED --escalation deadline--> ESCALATED
 | Manager sees another team's rows | Set the employee's Manager in **Admin panel**, or set the task's OwnerManager in **Manage tasks**; the scope is the union of both. |
 | Manager cannot assign to someone | The employee needs a `People` row with that manager set, or an existing task with that `OwnerManager`. |
 | A sheet edit disappeared | Expected: tabs are read-only. Use the side panels; check `AuditLog` for `SHEET_EDIT_BLOCKED`. |
-| Task shows Paused or `TRUE`/`FALSE` text instead of checkboxes | New rows are formatted on save. For older rows run **Allo Ops → Admin → Repair TaskMaster rows**, or re-save the task from **Manage tasks**; the value is normalised and the checkbox rule is applied. |
+| Task shows Paused or `TRUE`/`FALSE` text instead of checkboxes | New tasks are created active and their row is formatted on save. For older rows run **Allo Ops → Admin → Repair TaskMaster rows**, or re-save the task from **Manage tasks**; the value is normalised and the checkbox rule is applied. |
 | No email arrives | Check `AlertLedger` status; consumer Gmail is capped at 100 sends/day; check spam. |
-| Two rows show the same task | Duplicate `TaskID` in `TaskMaster` (older rows, or a save under different capitalisation). Run **Admin → Remove duplicate task IDs**; it keeps the first row and cancels the repeated `OPEN` cycles. |
+| Two rows show the same task | Duplicate `TaskID` in `TaskMaster` from before uniqueness was enforced. Run **Admin → Remove duplicate task IDs**; it keeps the first row and cancels the repeated `OPEN` cycles. |
+| "Task ID … is already used by …" | Expected. IDs are unique and a create never overwrites the existing task: edit that task, or pick another ID. The refusal is logged as `TASK_DUPLICATE_BLOCKED`. |
 | Ack button missing from email | Deploy the web app, then **Admin → Set web app URL** (or paste it with **Set web app URL manually**), then send a new alert. |
 | Google shows "unverified app" while authorising | Expected for a self-owned script: **Advanced → Go to (project)**. A Workspace admin may need to allow the deployment. |
 | Neither manager nor leadership configured | `setup` fills all three with the owner; replace them in `Config`. |

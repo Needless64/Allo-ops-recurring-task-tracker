@@ -163,7 +163,7 @@ function saveTask(data) {
     const proofLabel = safeText_(input.proofLabel, 40) ||
       (requiresTicket ? 'Ticket ID' : 'Proof summary');
     const escalationRule = String(input.escalationRule || '').trim().toUpperCase();
-    const active = input.active !== false && String(input.active).toLowerCase() !== 'false';
+    const activeRequested = input.active !== false && String(input.active).toLowerCase() !== 'false';
     let ownerManager = String(input.ownerManager || '').trim().toLowerCase();
     const notes = safeText_(input.notes, 500);
 
@@ -202,18 +202,47 @@ function saveTask(data) {
     const sh = sheet_(S.TASKS);
     const t = table_(S.TASKS);
     const c = t.col;
-    // Task IDs are matched case-insensitively: "daily12" and "Daily12" are the
-    // same task, so a save updates that row instead of appending a twin that
-    // taskMap_ would then silently shadow.
     const idKey = id.toLowerCase();
-    const existing = tasks_().filter(function (x) { return x.id.toLowerCase() === idKey; })[0] || null;
+    // `originalId` is the ID the form was opened with, so this function can tell
+    // an edit (same task, update its row) from a create (new task, must not
+    // overwrite whatever already owns that ID).
+    const originalKey = String(input.originalId || '').trim().toLowerCase();
+    const allTasks = tasks_();
+    let existing = null;
     let rowIndex = 0;
-    for (let i = 0; i < t.rows.length; i++) {
-      if (String(t.rows[i][c.TaskID] || '').trim().toLowerCase() === idKey) { rowIndex = i + 2; break; }
+    if (originalKey) {
+      for (let i = 0; i < t.rows.length; i++) {
+        if (String(t.rows[i][c.TaskID] || '').trim().toLowerCase() === originalKey) {
+          rowIndex = i + 2;
+          existing = allTasks.filter(function (x) { return x.rowIndex === rowIndex; })[0] || null;
+          break;
+        }
+      }
+    }
+    // One row per TaskID, case-insensitively: creating a task under an ID that
+    // already exists is refused instead of quietly rewriting that task, and so
+    // is renaming a task onto an ID someone else holds.
+    const clash = allTasks.filter(function (x) {
+      return x.id.toLowerCase() === idKey && (!existing || x.rowIndex !== existing.rowIndex);
+    })[0] || null;
+    if (clash) {
+      const owner = clash.employee || clash.email;
+      audit_(actor, role, 'TASK_DUPLICATE_BLOCKED', 'Task', id, '',
+        JSON.stringify({ keptTaskId: clash.id, keptTaskName: clash.name, keptEmployee: owner }), '', 'manage-panel');
+      return {
+        ok: false,
+        code: 'DUPLICATE_TASK_ID',
+        error: 'Task ID "' + id + '" is already used by "' + (clash.name || owner) + '"' +
+          (owner ? ' (' + owner + ')' : '') + '. Open that task to edit it, or use a different Task ID.'
+      };
     }
     // Keep the stored spelling: Cycles.TaskID joins back on the original ID, so
     // rewriting "Daily12" as "daily12" would orphan every cycle of that task.
     const canonicalId = existing ? existing.id : id;
+    // A brand-new task always starts running. Pausing is a deliberate action on
+    // an existing task, never a side effect of creating one.
+    const isNew = !rowIndex;
+    const active = isNew ? true : activeRequested;
 
     if (role === 'MANAGER') {
       if (existing && !canManageTask_(actor, existing)) {
@@ -227,7 +256,6 @@ function saveTask(data) {
       anchor ? startOfDay_(anchor) : startOfDay_(new Date()), dueTime, grace,
       requiresTicket, ticketPattern, proofLabel, escalationRule, active, ownerManager, notes
     ];
-    const isNew = !rowIndex;
     if (isNew) {
       appendRows_(S.TASKS, [values]);
       rowIndex = sh.getLastRow();
@@ -237,6 +265,12 @@ function saveTask(data) {
     // Appended rows sit below the range setup formatted, so apply the checkbox
     // and dropdown rules to this exact row or Active renders as text FALSE.
     try { formatTaskRow_(sh, rowIndex); } catch (e) { /* saved; next repair fixes formatting */ }
+    // Write the two checkbox values once more after the formatting pass, so the
+    // row's on/paused state can never differ from what was saved.
+    try {
+      sh.getRange(rowIndex, TSK.ACTIVE).setValue(active);
+      sh.getRange(rowIndex, TSK.TICKET_REQ).setValue(requiresTicket);
+    } catch (e) { /* saved; next repair fixes formatting */ }
 
     audit_(actor, role, isNew ? 'TASK_ADDED' : 'TASK_UPDATED', 'Task', canonicalId, '',
       JSON.stringify({ frequency: frequency, dueTime: dueTime, active: active, email: email }), '', 'manage-panel');
