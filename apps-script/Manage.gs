@@ -202,11 +202,18 @@ function saveTask(data) {
     const sh = sheet_(S.TASKS);
     const t = table_(S.TASKS);
     const c = t.col;
-    const existing = tasks_().filter(function (x) { return x.id === id; })[0] || null;
+    // Task IDs are matched case-insensitively: "daily12" and "Daily12" are the
+    // same task, so a save updates that row instead of appending a twin that
+    // taskMap_ would then silently shadow.
+    const idKey = id.toLowerCase();
+    const existing = tasks_().filter(function (x) { return x.id.toLowerCase() === idKey; })[0] || null;
     let rowIndex = 0;
     for (let i = 0; i < t.rows.length; i++) {
-      if (String(t.rows[i][c.TaskID] || '').trim() === id) { rowIndex = i + 2; break; }
+      if (String(t.rows[i][c.TaskID] || '').trim().toLowerCase() === idKey) { rowIndex = i + 2; break; }
     }
+    // Keep the stored spelling: Cycles.TaskID joins back on the original ID, so
+    // rewriting "Daily12" as "daily12" would orphan every cycle of that task.
+    const canonicalId = existing ? existing.id : id;
 
     if (role === 'MANAGER') {
       if (existing && !canManageTask_(actor, existing)) {
@@ -216,7 +223,7 @@ function saveTask(data) {
     }
 
     const values = [
-      id, name, employee || email.split('@')[0], email, frequency,
+      canonicalId, name, employee || email.split('@')[0], email, frequency,
       anchor ? startOfDay_(anchor) : startOfDay_(new Date()), dueTime, grace,
       requiresTicket, ticketPattern, proofLabel, escalationRule, active, ownerManager, notes
     ];
@@ -231,7 +238,7 @@ function saveTask(data) {
     // and dropdown rules to this exact row or Active renders as text FALSE.
     try { formatTaskRow_(sh, rowIndex); } catch (e) { /* saved; next repair fixes formatting */ }
 
-    audit_(actor, role, isNew ? 'TASK_ADDED' : 'TASK_UPDATED', 'Task', id, '',
+    audit_(actor, role, isNew ? 'TASK_ADDED' : 'TASK_UPDATED', 'Task', canonicalId, '',
       JSON.stringify({ frequency: frequency, dueTime: dueTime, active: active, email: email }), '', 'manage-panel');
 
     refreshCaches_();

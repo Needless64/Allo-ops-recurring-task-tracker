@@ -639,6 +639,8 @@ function writeStartHere_() {
     'IF SOMETHING LOOKS WRONG',
     'A task shows PAUSED            open it and press Resume, or tick Active and save it again.',
     'A due time shows as a date    run "Allo Ops > Admin > Repair TaskMaster rows" once.',
+    'Duplicate task IDs             run "Allo Ops > Admin > Remove duplicate task IDs"; it keeps the',
+    '                               first row per TaskID and cancels the repeated OPEN cycles.',
     'The data tabs have vanished    that is Hide tabs doing its job; Open ↗ brings one back.',
     'A ticket was refused          that ticket was already used; each cycle needs its own. The',
     '                              attempt is in AuditLog as PROOF_DUPLICATE_BLOCKED.',
@@ -820,6 +822,89 @@ function repairTaskMaster() {
     }
   } catch (e) {
     if (ui) ui.alert('TaskMaster repair failed', e.message || String(e), ui.ButtonSet.OK);
+    else throw e;
+  }
+}
+
+/**
+ * Two rows with the same TaskID are one task stored twice: taskMap_ keeps only
+ * the last definition, reconcileCycles_ creates a cycle for each row, and the
+ * panel shows separate cards for the same job. Keep the first row per TaskID,
+ * delete the rest (their content is kept in AuditLog), and cancel OPEN cycles
+ * that repeat a CycleID. Nothing is deleted silently.
+ */
+function dedupeTaskMaster_() {
+  const sh = sheet_(S.TASKS);
+  const t = table_(S.TASKS);
+  const c = t.col;
+  const now = new Date();
+  const audit = [];
+
+  const firstRow = {};
+  const doomed = [];
+  t.rows.forEach(function (r, i) {
+    const id = String(r[c.TaskID] || '').trim();
+    if (!id) return;
+    const key = id.toLowerCase();
+    if (firstRow[key] === undefined) { firstRow[key] = i + 2; return; }
+    doomed.push({ rowIndex: i + 2, id: id, keep: firstRow[key], raw: r });
+  });
+
+  doomed.forEach(function (d) {
+    audit.push([now, 'system', 'SYSTEM', 'TASK_DUPLICATE_REMOVED', 'Task', d.id,
+      d.raw.slice(0, H.TASKS.length).join(' | ').slice(0, 400),
+      'kept row ' + d.keep, '', 'repair']);
+  });
+
+  // Delete from the bottom so the row numbers above stay valid.
+  doomed.map(function (d) { return d.rowIndex; })
+    .sort(function (a, b) { return b - a; })
+    .forEach(function (row) { sh.deleteRow(row); });
+
+  const cyc = sheet_(S.CYCLES);
+  const keepCycle = {};
+  const cancel = [];
+  cycles_().forEach(function (cy) {
+    if (ACTIVE_STATES.indexOf(cy.status) < 0) return;
+    if (keepCycle[cy.id] === undefined) { keepCycle[cy.id] = cy.rowIndex; return; }
+    cancel.push(cy);
+  });
+  cancel.forEach(function (cy) {
+    cyc.getRange(cy.rowIndex, CYC.STATUS).setValue('CANCELLED');
+    cyc.getRange(cy.rowIndex, CYC.UPD).setValue(now);
+    audit.push([now, 'system', 'SYSTEM', 'CYCLE_DUPLICATE_CANCELLED', 'Cycle', cy.id,
+      cy.status, 'task ' + cy.taskId + '; cycle #' + cy.cycleNo + '; kept row ' + keepCycle[cy.id], '', 'repair']);
+  });
+
+  auditRows_(audit);
+  refreshCaches_();
+  return { tasks: doomed.length, cycles: cancel.length };
+}
+
+function dedupeTaskMaster() {
+  if (!requireAdmin_()) {
+    adminDenied_('Only an admin can remove duplicate tasks.');
+    return;
+  }
+  const ui = safeUi_();
+  if (ui) {
+    const ok = ui.alert('Remove duplicate task IDs?',
+      'Each TaskID keeps its first row; later rows with the same ID are deleted and their contents are ' +
+      'written to AuditLog as TASK_DUPLICATE_REMOVED.\n\n' +
+      'OPEN cycles that repeat a CycleID are cancelled as CYCLE_DUPLICATE_CANCELLED.',
+      ui.ButtonSet.YES_NO);
+    if (ok !== ui.Button.YES) return;
+  }
+  try {
+    const r = dedupeTaskMaster_();
+    try { refreshPending_(); refreshReview_(); refreshDashboard_(); } catch (e) { /* best effort */ }
+    if (ui) {
+      ui.alert('Duplicates removed',
+        r.tasks + ' duplicate task row(s) deleted.\n' + r.cycles + ' duplicate OPEN cycle(s) cancelled.\n\n' +
+        'AuditLog keeps what was removed.', ui.ButtonSet.OK);
+    }
+  } catch (e) {
+    if (ui) ui.alert('Could not remove duplicates', e.message || String(e), ui.ButtonSet.OK);
     else throw e;
   }
 }
@@ -1085,6 +1170,7 @@ function onOpen() {
         .addItem('Setup / repair sheet', 'setup')
         .addItem('Install triggers', 'adminInstallTriggers')
         .addItem('Repair TaskMaster rows', 'repairTaskMaster')
+        .addItem('Remove duplicate task IDs', 'dedupeTaskMaster')
         .addItem('Rebuild START HERE', 'refreshStartHere')
         .addSeparator()
         .addItem('Toggle demo mode', 'toggleDemoMode')
