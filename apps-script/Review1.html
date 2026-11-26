@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review</title>
+  <style>
+    :root{
+      --ink:#101828;--muted:#667085;--soft:#98A2B3;--line:#E4E7EC;--line2:#F2F4F7;
+      --bg:#F6F7F9;--brand:#0B5D57;--red:#B42318;--redbg:#FEF3F2;--amber:#B54708;--amberbg:#FFFAEB;
+      --green:#067647;--greenbg:#ECFDF3;--blue:#175CD3;--bluebg:#EFF8FF;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:10px 10px 18px;background:var(--bg);color:var(--ink);
+      font:12.5px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    [hidden]{display:none!important}
+    .head{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:9px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+    .head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .eyebrow{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);font-weight:750;margin-bottom:2px}
+    h1{margin:0;font-size:16px;line-height:1.25;letter-spacing:-.015em;font-weight:680}
+    .sub{font-size:10.5px;color:var(--soft);margin-top:2px;word-break:break-word}
+    .icon{width:27px;height:27px;flex:none;border:1px solid var(--line);border-radius:7px;background:#fff;color:#475467;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center}
+    .icon:hover{background:#F9FAFB}
+    select{width:100%;margin-top:9px;font:inherit;font-size:11.5px;color:var(--ink);background:#fff;border:1px solid #D0D5DD;border-radius:7px;padding:6px 7px}
+    select:focus,input:focus{outline:2px solid rgba(14,124,114,.2);border-color:#0E7C72}
+    .badge{display:inline-block;background:var(--amberbg);color:var(--amber);border:1px solid #FEDF89;border-radius:999px;padding:1px 6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:1px}
+    .summary{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}
+    .stat{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 9px}
+    .stat span{display:block;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--soft);font-weight:700}
+    .stat b{display:block;font-size:17px;line-height:1.2;letter-spacing:-.03em;margin-top:1px;font-weight:680;word-break:break-word}
+    .stat.alert b{color:var(--red)}
+    .stat.warn b{color:var(--amber)}
+    .stat.good b{color:var(--green)}
+    .tools{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+    .tools input{flex:1;min-width:0;font:inherit;font-size:11.5px;border:1px solid #D0D5DD;border-radius:7px;padding:6px 8px;background:#fff;color:var(--ink)}
+    .tools span{font-size:9.5px;color:var(--soft);white-space:nowrap}
+    .tw{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:55vh}
+    table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:10.5px}
+    th{position:sticky;top:0;z-index:2;background:#F9FAFB;color:var(--muted);font-size:8.5px;letter-spacing:.05em;
+      text-transform:uppercase;text-align:left;font-weight:700;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+    td{padding:6px 8px;border-top:1px solid var(--line2);white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
+    tr:first-child td{border-top:0}
+    tbody tr:hover td{background:#FCFCFD}
+    .num{font-variant-numeric:tabular-nums}
+    .muted{color:var(--soft)}
+    .st{display:inline-block;border-radius:999px;padding:1px 6px;font-size:9px;font-weight:700;letter-spacing:.02em;line-height:1.45}
+    .st-OPEN{background:var(--bluebg);color:var(--blue)}
+    .st-MISSED{background:var(--redbg);color:var(--red)}
+    .st-ESCALATED{background:var(--red);color:#fff}
+    .st-COMPLETED{background:var(--greenbg);color:var(--green)}
+    .st-SENT{background:var(--greenbg);color:var(--green)}
+    .st-PENDING{background:var(--amberbg);color:var(--amber)}
+    .st-FAILED,.st-SUPPRESSED{background:var(--redbg);color:var(--red)}
+    .st-none{background:#F2F4F7;color:#475467}
+    .text{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;white-space:pre-wrap;
+      word-break:break-word;font-size:11.5px;line-height:1.55;color:#344054;max-height:62vh;overflow:auto}
+    .empty{background:#fff;border:1px dashed #D0D5DD;border-radius:10px;padding:22px 15px;text-align:center;color:var(--muted)}
+    .empty b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:3px}
+    .empty p{margin:0 0 10px}
+    .btn{border:1px solid #D0D5DD;background:#fff;color:#344054;border-radius:7px;padding:7px 10px;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer}
+    .btn:hover{background:#F9FAFB}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:9.5px;color:var(--soft)}
+    .loading{display:flex;align-items:center;gap:7px;padding:26px 6px;color:var(--muted);font-size:11px}
+    .spinner{width:13px;height:13px;border:2px solid #D0D5DD;border-top-color:var(--brand);border-radius:50%;animation:s .7s linear infinite}
+    @keyframes s{to{transform:rotate(360deg)}}
+    .toast{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+    .toast div{background:#101828;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;box-shadow:0 8px 20px rgba(16,24,40,.25)}
+    .toast div.bad{background:#912018}
+    .toast div.good{background:#054F31}
+  </style>
+</head>
+<body>
+
+<div class="head">
+  <div class="head-row">
+    <div style="min-width:0">
+      <div class="eyebrow" id="company">Allo Ops · Review</div>
+      <h1 id="title">Loading…</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <button class="icon" id="refresh" type="button" title="Refresh" aria-label="Refresh">&#8635;</button>
+  </div>
+  <select id="sheetSelect" aria-label="Choose a tab to review"></select>
+</div>
+
+<div class="summary" id="summary"></div>
+<div class="tools" id="tools" hidden>
+  <input id="search" type="search" placeholder="Search rows…" aria-label="Search rows">
+  <span id="count"></span>
+</div>
+<div id="content"><div class="loading"><span class="spinner"></span> Loading…</div></div>
+<div class="foot" id="foot" hidden>
+  <button class="btn" id="openTab" type="button">Open tab</button>
+  <span id="footNote"></span>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STATE = { ctx: null, data: null, name: '', query: '' };
+  var $ = function (sel) { return document.querySelector(sel); };
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function api(name) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (resolve, reject) {
+      var runner = google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function (err) {
+          reject(new Error(err && err.message ? err.message : 'Request failed.'));
+        });
+      runner[name].apply(runner, args);
+    });
+  }
+
+  function toast(msg, kind) {
+    var el = document.createElement('div');
+    el.className = kind || '';
+    el.textContent = msg;
+    $('#toast').appendChild(el);
+    setTimeout(function () {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity .2s';
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+    }, 3200);
+  }
+
+  function setLoading() {
+    $('#summary').innerHTML = '';
+    $('#tools').hidden = true;
+    $('#foot').hidden = true;
+    $('#content').innerHTML = '<div class="loading"><span class="spinner"></span> Loading…</div>';
+  }
+
+  function boot() {
+    api('getReviewContext').then(function (ctx) {
+      if (!ctx || !ctx.ok) return renderError(ctx || { error: 'Could not open the review sidebar.' });
+      STATE.ctx = ctx;
+      $('#company').textContent = (ctx.company || 'Allo Innoware') + ' · Review';
+      fillTabs(ctx);
+    }).catch(function (err) { renderError({ error: err.message }); });
+  }
+
+  function fillTabs(ctx) {
+    var tabs = ctx.tabs || [];
+    var allowed = tabs.filter(function (t) { return t.allowed; });
+    if (!allowed.length) {
+      return renderError({ error: 'There are no tabs available to this account.' });
+    }
+
+    $('#sheetSelect').innerHTML = allowed.map(function (t) {
+      return '<option value="' + esc(t.name) + '">' + esc(t.name) + (t.hidden ? ' (hidden)' : '') + '</option>';
+    }).join('');
+
+    var start = allowed.filter(function (t) { return t.name === ctx.active; })[0]
+      ? ctx.active : allowed[0].name;
+    load(start);
+  }
+
+  function load(name) {
+    STATE.name = name;
+    STATE.query = '';
+    $('#search').value = '';
+    setLoading();
+    api('getSheetReview', name).then(function (data) {
+      if (!data || !data.ok) return renderError(data || { error: 'Could not load this tab.' });
+      render(data);
+    }).catch(function (err) { renderError({ error: err.message }); });
+  }
+
+  function render(data) {
+    STATE.data = data;
+    $('#title').textContent = data.title || data.name;
+    $('#sub').innerHTML = esc(data.name) + (data.hidden ? ' <span class="badge">Hidden</span>' : '');
+    $('#sheetSelect').value = data.name;
+
+    renderSummary(data.summary || []);
+
+    if (data.kind === 'text') {
+      $('#tools').hidden = true;
+      $('#content').innerHTML = data.text
+        ? '<div class="text">' + esc(data.text) + '</div>'
+        : '<div class="empty"><b>Nothing here yet</b>Run setup to populate this tab.</div>';
+      showFoot(data);
+      return;
+    }
+
+    $('#tools').hidden = false;
+    renderTable();
+    showFoot(data);
+  }
+
+  function renderSummary(summary) {
+    if (!summary.length) { $('#summary').innerHTML = ''; return; }
+    $('#summary').innerHTML = summary.map(function (s) {
+      return '<div class="stat ' + esc(s.tone || '') + '"><span>' + esc(s.label) + '</span>' +
+        '<b>' + esc(s.value) + '</b></div>';
+    }).join('');
+  }
+
+  function renderTable() {
+    var data = STATE.data;
+    if (!data) return;
+    var query = STATE.query.trim().toLowerCase();
+    var rows = (data.rows || []).filter(function (row) {
+      if (!query) return true;
+      return row.join(' ').toLowerCase().indexOf(query) >= 0;
+    });
+
+    $('#count').textContent = rows.length + ' of ' + (data.rows || []).length;
+
+    if (!rows.length) {
+      $('#content').innerHTML = '<div class="empty"><b>' + (query ? 'No matching rows' : 'No rows yet') + '</b>' +
+        (query ? 'Try a different search.' : 'This tab is empty or has not been built yet.') + '</div>';
+      return;
+    }
+
+    var head = data.headers || [];
+    var html = '<div class="tw"><table><thead><tr>' +
+      head.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') +
+      '</tr></thead><tbody>';
+
+    rows.forEach(function (row) {
+      html += '<tr>';
+      row.forEach(function (value, i) {
+        var text = String(value == null ? '' : value);
+        html += '<td title="' + esc(text) + '">' + cell(text, head[i]) + '</td>';
+      });
+      html += '</tr>';
+    });
+
+    $('#content').innerHTML = html + '</tbody></table></div>';
+  }
+
+  function cell(value, header) {
+    if (!value) return '<span class="muted">—</span>';
+    if (header === 'Status') {
+      return '<span class="st st-' + esc(value.toUpperCase().replace(/[^A-Z]/g, '')) + '">' + esc(value) + '</span>';
+    }
+    if (header === 'Active' || header === 'Reviewed') {
+      var on = /^(true|yes|1)$/i.test(value);
+      return '<span class="st ' + (on ? 'st-COMPLETED' : 'st-none') + '">' + (on ? 'Yes' : 'No') + '</span>';
+    }
+    if (/^-?\d+(\.\d+)?%?$/.test(value)) return '<span class="num">' + esc(value) + '</span>';
+    return esc(value);
+  }
+
+  function showFoot(data) {
+    var foot = $('#foot');
+    foot.hidden = false;
+    var note = '';
+    if (data.kind === 'text') note = 'Read-only';
+    else if (data.total > data.shown) note = 'Latest ' + data.shown + ' of ' + data.total;
+    else note = data.shown + ' row' + (data.shown === 1 ? '' : 's');
+    if (data.canOpen === false) note += ' · scoped view';
+
+    $('#footNote').textContent = note;
+    var open = $('#openTab');
+    open.hidden = !!data.hidden || data.canOpen === false;
+    open.disabled = !!data.hidden || data.canOpen === false;
+  }
+
+  function renderError(data) {
+    $('#title').textContent = data && data.code === 'FORBIDDEN' ? 'Not available for your role' : 'Review unavailable';
+    $('#sub').textContent = '';
+    $('#summary').innerHTML = '';
+    $('#tools').hidden = true;
+    $('#foot').hidden = true;
+
+    var actions = '';
+    if (data && data.code === 'FORBIDDEN') {
+      actions = '<button class="btn primary" id="myTasks" type="button">Open workspace</button>';
+    } else if (data && data.code === 'AUTH') {
+      actions = '<div class="muted" style="font-size:10.5px">Open the Google Sheet with your work account, then use <b>Allo Ops &gt; Review a tab</b>.</div>';
+    } else {
+      actions = '<button class="btn" id="retry" type="button">Try again</button>';
+    }
+
+    var heading = data && data.code === 'FORBIDDEN' ? 'Not available for your role' : 'Unable to open this view';
+    $('#content').innerHTML = '<div class="empty"><b>' + heading + '</b>' +
+      '<p>' + esc(data && data.error ? data.error : 'Could not load this tab.') + '</p>' + actions + '</div>';
+
+    var mine = document.getElementById('myTasks');
+    if (mine) mine.addEventListener('click', function () { google.script.run.showSidebar(); });
+    var retry = document.getElementById('retry');
+    if (retry) retry.addEventListener('click', function () { load(STATE.name || (STATE.ctx && STATE.ctx.active)); });
+  }
+
+  $('#sheetSelect').addEventListener('change', function () { load(this.value); });
+
+  $('#refresh').addEventListener('click', function () {
+    if (STATE.name) load(STATE.name);
+  });
+
+  $('#search').addEventListener('input', function () {
+    STATE.query = this.value;
+    renderTable();
+  });
+
+  $('#openTab').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    api('activateSheet', STATE.name).then(function (r) {
+      if (!r || !r.ok) throw new Error(r && r.error ? r.error : 'Could not open the tab.');
+      toast('Opened ' + STATE.name, 'good');
+      btn.disabled = false;
+    }).catch(function (e) {
+      toast(e.message, 'bad');
+      btn.disabled = false;
+    });
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>

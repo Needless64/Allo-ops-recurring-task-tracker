@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage</title>
+  <style>
+    :root{
+      --ink:#101828;--muted:#667085;--soft:#98A2B3;--line:#E4E7EC;--line2:#F2F4F7;
+      --bg:#F6F7F9;--brand:#0B5D57;--red:#B42318;--redbg:#FEF3F2;--amber:#B54708;
+      --amberbg:#FFFAEB;--green:#067647;--greenbg:#ECFDF3;--blue:#175CD3;--bluebg:#EFF8FF;
+    }
+    *{box-sizing:border-box}
+    [hidden]{display:none!important}
+    body{margin:0;padding:10px 10px 20px;background:var(--bg);color:var(--ink);
+      font:12.5px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    .head{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:9px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+    .head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .eyebrow{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);font-weight:750;margin-bottom:2px}
+    h1{margin:0;font-size:16px;line-height:1.25;letter-spacing:-.015em;font-weight:680}
+    .sub{font-size:10.5px;color:var(--soft);margin-top:2px;word-break:break-word}
+    .icon{width:27px;height:27px;flex:none;border:1px solid var(--line);border-radius:7px;background:#fff;color:#475467;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center}
+    .icon:hover{background:#F9FAFB}
+    nav{display:flex;gap:5px;margin-bottom:9px;flex-wrap:wrap}
+    nav button{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:7px 11px;
+      font:inherit;font-size:11px;font-weight:700;cursor:pointer;min-height:32px}
+    nav button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+    .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px}
+    .card h2{margin:0 0 3px;font-size:12.5px;letter-spacing:-.01em;font-weight:680}
+    .card .hint{margin:0 0 9px;color:var(--soft);font-size:10.5px}
+    label{display:block;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:8px 0 3px}
+    input,select,textarea{width:100%;font:inherit;font-size:12px;color:var(--ink);background:#fff;border:1px solid #D0D5DD;border-radius:7px;padding:7px 8px;min-height:34px}
+    textarea{min-height:58px;resize:vertical}
+    input:focus,select:focus,textarea:focus{outline:2px solid rgba(14,124,114,.2);border-color:#0E7C72}
+    input[readonly]{background:#F9FAFB;color:var(--muted)}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .check{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:11px;color:#344054}
+    .check input{width:16px;min-height:16px;height:16px;margin:0}
+    .actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+    .btn{border:1px solid #D0D5DD;background:#fff;color:#344054;border-radius:7px;padding:8px 11px;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;min-height:34px}
+    .btn:hover{background:#F9FAFB}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.primary:hover{background:#084B46}
+    .btn.small{padding:5px 8px;font-size:10px;min-height:28px}
+    .btn:disabled{opacity:.55;cursor:default}
+    .task{border:1px solid var(--line);border-radius:9px;padding:9px;margin-bottom:7px;background:#fff}
+    .task.off{background:#FCFCFD;opacity:.78}
+    .trow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .tname{font-size:12px;font-weight:680;line-height:1.3}
+    .tmeta{font-size:10px;color:var(--muted);margin-top:2px;word-break:break-word}
+    .tid{font-size:9px;color:var(--soft);letter-spacing:.03em;margin-top:2px}
+    .badge{display:inline-block;border-radius:999px;padding:1px 6px;font-size:8.5px;font-weight:750;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+    .b-on{background:var(--greenbg);color:var(--green)}
+    .b-off{background:#F2F4F7;color:#475467}
+    .b-freq{background:var(--bluebg);color:var(--blue)}
+    .empty{border:1px dashed #D0D5DD;border-radius:9px;padding:18px 12px;text-align:center;color:var(--muted);font-size:11px}
+    .empty b{display:block;color:var(--ink);font-size:12px;margin-bottom:3px}
+    .msg{border-radius:8px;padding:8px 10px;font-size:11px;margin-bottom:8px}
+    .msg.err{background:var(--redbg);color:var(--red);border:1px solid #FECDCA}
+    .msg.ok{background:var(--greenbg);color:var(--green);border:1px solid #ABEFC6}
+    .toast{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+    .toast div{background:#101828;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;box-shadow:0 8px 20px rgba(16,24,40,.25)}
+    .toast div.bad{background:#912018}
+    .toast div.good{background:#054F31}
+    .loading{display:flex;align-items:center;gap:7px;padding:26px 6px;color:var(--muted);font-size:11px}
+    .spinner{width:13px;height:13px;border:2px solid #D0D5DD;border-top-color:var(--brand);border-radius:50%;animation:s .7s linear infinite}
+    @keyframes s{to{transform:rotate(360deg)}}
+    .cfg{border-top:1px solid var(--line2);padding:8px 0}
+    .cfg:first-child{border-top:0;padding-top:0}
+    .cfg .k{font-size:10px;font-weight:750;letter-spacing:.03em}
+    .cfg .n{font-size:9.5px;color:var(--soft);margin-bottom:5px}
+    .cfg .r{display:flex;gap:6px}
+    .cfg .r input{flex:1;min-width:0}
+    .hol{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line2);padding:7px 0}
+    .hol:first-child{border-top:0;padding-top:0}
+    .hol .d{font-size:11px;font-weight:650}
+    .hol .x{font-size:10px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="head">
+    <div class="head-row">
+      <div style="min-width:0">
+        <div class="eyebrow" id="company">Allo Ops · Manage</div>
+        <h1 id="title">Tasks & settings</h1>
+        <div class="sub" id="who">Checking your account…</div>
+      </div>
+      <button class="icon" id="refresh" type="button" title="Refresh" aria-label="Refresh">&#8635;</button>
+    </div>
+  </div>
+
+  <nav id="tabs" hidden></nav>
+  <div id="content"><div class="loading"><span class="spinner"></span> Loading…</div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      'use strict';
+      var STATE = { ctx: null, tab: 'tasks', editing: '', showForm: false, msg: '' };
+      var $ = function (sel) { return document.querySelector(sel); };
+
+      function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function api(name) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return new Promise(function (resolve, reject) {
+          var runner = google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(function (err) {
+              reject(new Error(err && err.message ? err.message : 'Request failed.'));
+            });
+          runner[name].apply(runner, args);
+        });
+      }
+
+      function toast(msg, kind) {
+        var el = document.createElement('div');
+        el.className = kind || '';
+        el.textContent = msg;
+        $('#toast').appendChild(el);
+        setTimeout(function () {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity .2s';
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+        }, 3200);
+      }
+
+      function fmtFreq(f) {
+        if (f === 'DAILY') return 'Daily';
+        return 'Every ' + f + ' days';
+      }
+
+      function boot() {
+        api('getManageContext').then(function (ctx) {
+          if (!ctx || !ctx.ok) return renderError(ctx || { error: 'Could not load this panel.' });
+          STATE.ctx = ctx;
+          render();
+        }).catch(function (err) { renderError({ error: err.message }); });
+      }
+
+      function renderError(data) {
+        $('#who').textContent = '';
+        $('#tabs').hidden = true;
+        $('#content').innerHTML = '<div class="card"><h2>' +
+          (data && data.code === 'FORBIDDEN' ? 'Managers only' : 'Unavailable') + '</h2>' +
+          '<p class="hint">' + esc(data && data.error ? data.error : 'Could not load this panel.') + '</p>' +
+          '<button class="btn" id="retry" type="button">Try again</button></div>';
+        var retry = document.getElementById('retry');
+        if (retry) retry.addEventListener('click', boot);
+      }
+
+      function render() {
+        var ctx = STATE.ctx;
+        $('#company').textContent = (ctx.company || 'Allo Innoware') + ' · ' + (ctx.admin ? 'Manage' : 'Team tasks');
+        $('#title').textContent = ctx.admin ? 'Tasks & settings' : 'Team tasks';
+        $('#who').textContent = 'Signed in as ' + ctx.email + ' · ' + (ctx.admin ? 'ADMIN' : 'MANAGER') +
+          (ctx.admin ? '' : ' · only your team');
+
+        var tabs = [{ id: 'tasks', label: 'Tasks' }];
+        if (ctx.admin) {
+          tabs.push({ id: 'holidays', label: 'Holidays' });
+          tabs.push({ id: 'settings', label: 'Settings' });
+        }
+        if (!tabs.some(function (t) { return t.id === STATE.tab; })) STATE.tab = 'tasks';
+        $('#tabs').hidden = tabs.length < 2;
+        $('#tabs').innerHTML = tabs.map(function (t) {
+          return '<button type="button" data-tab="' + t.id + '" aria-pressed="' +
+            (STATE.tab === t.id) + '">' + t.label + '</button>';
+        }).join('');
+
+        if (STATE.tab === 'holidays') return renderHolidays();
+        if (STATE.tab === 'settings') return renderSettings();
+        renderTasks();
+      }
+
+      /* -------------------------------------------------------------- */
+      /* Tasks                                                          */
+      /* -------------------------------------------------------------- */
+
+      function renderTasks() {
+        var ctx = STATE.ctx;
+        var tasks = ctx.tasks || [];
+        var html = '<div class="card"><div class="trow"><div><h2>Tasks</h2>' +
+          '<p class="hint">' + (ctx.admin
+            ? 'Every task in the company. Create, edit, pause or reassign.'
+            : 'Create and edit tasks for your own team.') + '</p></div>' +
+          '<button class="btn primary small" id="newTask" type="button">New task</button></div></div>';
+
+        html += '<div class="card" id="formCard"' + (STATE.showForm ? '' : ' hidden') + '></div>';
+
+        html += tasks.length ? tasks.map(taskCard).join('')
+          : '<div class="card"><div class="empty"><b>No tasks yet</b>Create the first recurring task with New task.</div></div>';
+
+        $('#content').innerHTML = html;
+        if (STATE.showForm) renderForm();
+        var newBtn = document.getElementById('newTask');
+        if (newBtn) newBtn.addEventListener('click', function () {
+          STATE.editing = '';
+          STATE.showForm = true;
+          render();
+          var card = document.getElementById('formCard');
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+
+      function taskCard(t) {
+        return '<div class="task ' + (t.active ? '' : 'off') + '">' +
+          '<div class="trow"><div style="min-width:0">' +
+            '<div class="tname">' + esc(t.name) + '</div>' +
+            '<div class="tmeta">' + esc(t.employee || t.email) + ' · ' + esc(t.email) + '</div>' +
+            '<div class="tid">' + esc(t.id) + '</div>' +
+          '</div><div style="text-align:right">' +
+            '<span class="badge b-freq">' + esc(fmtFreq(t.frequency)) + '</span> ' +
+            '<span class="badge ' + (t.active ? 'b-on' : 'b-off') + '">' + (t.active ? 'Active' : 'Paused') + '</span>' +
+            '<div class="tmeta">Due ' + esc(t.dueTime) + ' · grace ' + esc(t.grace) + 'm</div>' +
+            '<div class="actions" style="justify-content:flex-end;margin-top:5px">' +
+              '<button class="btn small" type="button" data-edit="' + esc(t.id) + '">Edit</button>' +
+              '<button class="btn small" type="button" data-toggle="' + esc(t.id) + '">' +
+                (t.active ? 'Pause' : 'Resume') + '</button>' +
+            '</div>' +
+          '</div></div></div>';
+      }
+
+      function renderForm() {
+        var ctx = STATE.ctx;
+        var editing = STATE.editing ? (ctx.tasks || []).filter(function (t) {
+          return t.id === STATE.editing;
+        })[0] : null;
+        var t = editing || {
+          id: '', name: '', employee: '', email: '', frequency: 'DAILY',
+          anchorIso: '', dueTime: '18:00', grace: 30, requiresTicket: false,
+          ticketPattern: '', proofLabel: '', escalationRule: 'HOURS',
+          ownerManager: ctx.email, notes: '', active: true
+        };
+        var team = ctx.team || [];
+        var datalist = '<datalist id="teamList">' + team.map(function (p) {
+          return '<option value="' + esc(p.email) + '">' + esc(p.name) + '</option>';
+        }).join('') + '</datalist>';
+
+        $('#formCard').innerHTML =
+          '<h2>' + (editing ? 'Edit task' : 'New task') + '</h2>' +
+          '<p class="hint">' + (editing
+            ? 'Changes apply to future cycles; an open cycle keeps its current due time.'
+            : 'A new task gets its first cycle immediately.') + '</p>' +
+          '<div id="formMsg"></div>' +
+          '<label for="fId">Task ID</label>' +
+          '<input id="fId" type="text" maxlength="40" placeholder="T-OPS-01" value="' + esc(t.id) + '"' +
+            (editing ? ' readonly' : '') + '>' +
+          '<label for="fName">Task name</label>' +
+          '<input id="fName" type="text" maxlength="120" placeholder="Daily dispatch update" value="' + esc(t.name) + '">' +
+          '<label for="fEmail">Assign to email</label>' +
+          '<input id="fEmail" type="email" list="teamList" autocomplete="off" placeholder="name@company.com" value="' + esc(t.email) + '">' +
+          datalist +
+          '<label for="fEmployee">Employee name</label>' +
+          '<input id="fEmployee" type="text" maxlength="80" placeholder="Display name" value="' + esc(t.employee) + '">' +
+          '<div class="three">' +
+            '<div><label for="fFreq">Frequency</label><select id="fFreq">' +
+              [['DAILY', 'Daily'], ['7', 'Every 7 days'], ['15', 'Every 15 days'], ['30', 'Every 30 days']].map(function (f) {
+                return '<option value="' + f[0] + '"' + (t.frequency === f[0] ? ' selected' : '') + '>' + f[1] + '</option>';
+              }).join('') + '</select></div>' +
+            '<div><label for="fAnchor">Anchor date</label><input id="fAnchor" type="date" value="' + esc(t.anchorIso) + '"></div>' +
+            '<div><label for="fTime">Due time</label><input id="fTime" type="time" value="' + esc(t.dueTime) + '"></div>' +
+          '</div>' +
+          '<div class="two">' +
+            '<div><label for="fGrace">Grace (minutes)</label><input id="fGrace" type="number" min="0" max="240" value="' + esc(t.grace) + '"></div>' +
+            '<div><label for="fEsc">Escalation</label><select id="fEsc">' +
+              '<option value="HOURS"' + (t.escalationRule === 'HOURS' ? ' selected' : '') + '>After hours</option>' +
+              '<option value="NEXT_WORKDAY"' + (t.escalationRule === 'NEXT_WORKDAY' ? ' selected' : '') + '>Next workday</option>' +
+            '</select></div>' +
+          '</div>' +
+          '<label class="check"><input id="fTicketReq" type="checkbox"' + (t.requiresTicket ? ' checked' : '') + '> Requires a ticket / proof reference</label>' +
+          '<div class="two">' +
+            '<div><label for="fPattern">Ticket pattern <span style="text-transform:none;letter-spacing:0">(regex, optional)</span></label>' +
+              '<input id="fPattern" type="text" maxlength="120" placeholder="^[A-Z]{2,6}-\\d{4,8}$" value="' + esc(t.ticketPattern) + '"></div>' +
+            '<div><label for="fProof">Proof label</label><input id="fProof" type="text" maxlength="40" placeholder="Ticket ID" value="' + esc(t.proofLabel) + '"></div>' +
+          '</div>' +
+          (ctx.admin
+            ? '<label for="fOwner">Owner manager email</label><input id="fOwner" type="email" placeholder="manager@company.com" value="' + esc(t.ownerManager) + '">'
+            : '') +
+          '<label for="fNotes">Instructions</label>' +
+          '<textarea id="fNotes" maxlength="500" placeholder="What exactly should the employee do?">' + esc(t.notes) + '</textarea>' +
+          '<label class="check"><input id="fActive" type="checkbox"' + (t.active ? ' checked' : '') + '> Active</label>' +
+          '<div class="actions"><button class="btn primary" id="saveTask" type="button">' + (editing ? 'Save task' : 'Create task') + '</button>' +
+            '<button class="btn" id="cancelTask" type="button">Cancel</button></div>';
+
+        var emailEl = $('#fEmail');
+        var nameEl = $('#fEmployee');
+        emailEl.addEventListener('change', function () {
+          var match = team.filter(function (p) { return p.email === emailEl.value.trim().toLowerCase(); })[0];
+          if (match) nameEl.value = match.name;
+        });
+        // null keeps the Active checkbox; passing false here force-paused every
+        // task created or edited from the form, whatever the checkbox said.
+        $('#saveTask').addEventListener('click', function () { saveTask(null); });
+        $('#cancelTask').addEventListener('click', function () {
+          STATE.showForm = false;
+          STATE.editing = '';
+          render();
+        });
+      }
+
+      function payloadFromForm(activeOverride) {
+        var owner = document.getElementById('fOwner');
+        return {
+          id: $('#fId').value.trim(),
+          name: $('#fName').value.trim(),
+          email: $('#fEmail').value.trim(),
+          employee: $('#fEmployee').value.trim(),
+          frequency: $('#fFreq').value,
+          anchorIso: $('#fAnchor').value,
+          dueTime: $('#fTime').value,
+          grace: $('#fGrace').value,
+          requiresTicket: $('#fTicketReq').checked,
+          ticketPattern: $('#fPattern').value.trim(),
+          proofLabel: $('#fProof').value.trim(),
+          escalationRule: $('#fEsc').value,
+          ownerManager: owner ? owner.value.trim() : '',
+          notes: $('#fNotes').value.trim(),
+          active: activeOverride == null ? $('#fActive').checked : activeOverride
+        };
+      }
+
+      function setFormMsg(text, kind) {
+        var el = document.getElementById('formMsg');
+        if (el) el.innerHTML = text ? '<div class="msg ' + (kind || '') + '">' + esc(text) + '</div>' : '';
+      }
+
+      function saveTask(activeOverride) {
+        var btn = document.getElementById('saveTask');
+        var payload = payloadFromForm(activeOverride);
+        if (!payload.id) return setFormMsg('Enter a task ID.', 'err');
+        if (!payload.name) return setFormMsg('Enter a task name.', 'err');
+        if (!payload.email) return setFormMsg('Choose who the task is assigned to.', 'err');
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+        setFormMsg('');
+        api('saveTask', payload).then(function (ctx) {
+          if (!ctx || !ctx.ok) throw new Error(ctx && ctx.error ? ctx.error : 'Could not save.');
+          STATE.ctx = ctx;
+          STATE.showForm = false;
+          STATE.editing = '';
+          render();
+          toast('Task saved.', 'good');
+        }).catch(function (err) {
+          setFormMsg(err.message, 'err');
+          if (btn) { btn.disabled = false; btn.textContent = STATE.editing ? 'Save task' : 'Create task'; }
+        });
+      }
+
+      function toggleTask(id) {
+        var task = (STATE.ctx.tasks || []).filter(function (t) { return t.id === id; })[0];
+        if (!task) return;
+        var payload = {
+          id: task.id, name: task.name, email: task.email, employee: task.employee,
+          frequency: task.frequency, anchorIso: task.anchorIso, dueTime: task.dueTime,
+          grace: task.grace, requiresTicket: task.requiresTicket,
+          ticketPattern: task.ticketPattern, proofLabel: task.proofLabel,
+          escalationRule: task.escalationRule, ownerManager: task.ownerManager,
+          notes: task.notes, active: !task.active
+        };
+        api('saveTask', payload).then(function (ctx) {
+          if (!ctx || !ctx.ok) throw new Error(ctx && ctx.error ? ctx.error : 'Could not save.');
+          STATE.ctx = ctx;
+          render();
+          toast(task.active ? 'Task paused.' : 'Task resumed.', 'good');
+        }).catch(function (err) { toast(err.message, 'bad'); });
+      }
+
+      /* -------------------------------------------------------------- */
+      /* Holidays                                                       */
+      /* -------------------------------------------------------------- */
+
+      function renderHolidays() {
+        var holidays = STATE.ctx.holidays || [];
+        var today = new Date();
+        var iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' +
+          String(today.getDate()).padStart(2, '0');
+
+        var html = '<div class="card"><h2>Add a holiday</h2>' +
+          '<p class="hint">Tasks never fall due on these dates.</p>' +
+          '<div id="formMsg"></div>' +
+          '<div class="two"><div><label for="hDate">Date</label><input id="hDate" type="date" value="' + iso + '"></div>' +
+          '<div><label for="hDesc">Description</label><input id="hDesc" type="text" maxlength="120" placeholder="Diwali"></div></div>' +
+          '<div class="actions"><button class="btn primary" id="addHoliday" type="button">Add holiday</button></div></div>';
+
+        html += '<div class="card"><h2>Holidays</h2>' + (holidays.length
+          ? holidays.map(function (h) {
+              return '<div class="hol"><div><div class="d">' + esc(h.date) + '</div>' +
+                '<div class="x">' + esc(h.description) + '</div></div>' +
+                '<button class="btn small" type="button" data-delhol="' + esc(h.date) + '">Remove</button></div>';
+            }).join('')
+          : '<div class="empty"><b>No holidays</b>Add the next one above.</div>') + '</div>';
+
+        $('#content').innerHTML = html;
+        $('#addHoliday').addEventListener('click', function () {
+          var date = $('#hDate').value;
+          var description = $('#hDesc').value.trim();
+          if (!date || !description) return toast('Choose a date and description.', 'bad');
+          api('saveHoliday', { date: date, description: description }).then(function (ctx) {
+            if (!ctx || !ctx.ok) throw new Error(ctx && ctx.error ? ctx.error : 'Could not save.');
+            STATE.ctx = ctx;
+            render();
+            toast('Holiday saved.', 'good');
+          }).catch(function (err) { toast(err.message, 'bad'); });
+        });
+      }
+
+      function deleteHoliday(date) {
+        api('deleteHoliday', date).then(function (ctx) {
+          if (!ctx || !ctx.ok) throw new Error(ctx && ctx.error ? ctx.error : 'Could not remove.');
+          STATE.ctx = ctx;
+          render();
+          toast('Holiday removed.', 'good');
+        }).catch(function (err) { toast(err.message, 'bad'); });
+      }
+
+      /* -------------------------------------------------------------- */
+      /* Settings                                                       */
+      /* -------------------------------------------------------------- */
+
+      function renderSettings() {
+        var rows = STATE.ctx.config || [];
+        var html = '<div class="card"><h2>Settings</h2>' +
+          '<p class="hint">Changes apply on the next automation run. Roles live in the Admin panel, not here.</p>' +
+          '<div id="formMsg"></div>' +
+          rows.map(function (r, i) {
+            return '<div class="cfg"><div class="k">' + esc(r.key) + '</div>' +
+              '<div class="n">' + esc(r.notes) + '</div>' +
+              '<div class="r"><input id="cfg-' + i + '" type="text" maxlength="300" value="' + esc(r.value) + '">' +
+              '<button class="btn small" type="button" data-cfg="' + esc(r.key) + '" data-i="' + i + '">Save</button></div></div>';
+          }).join('') + '</div>';
+        $('#content').innerHTML = html;
+      }
+
+      /* -------------------------------------------------------------- */
+      /* Events + boot                                                  */
+      /* -------------------------------------------------------------- */
+
+      $('#tabs').addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('[data-tab]') : null;
+        if (!btn) return;
+        STATE.tab = btn.getAttribute('data-tab');
+        render();
+      });
+
+      $('#content').addEventListener('click', function (e) {
+        var target = e.target.closest ? e.target.closest('[data-edit],[data-toggle],[data-delhol],[data-cfg]') : null;
+        if (!target) return;
+
+        var edit = target.getAttribute('data-edit');
+        if (edit) {
+          STATE.editing = edit;
+          STATE.showForm = true;
+          render();
+          var card = document.getElementById('formCard');
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+        var toggle = target.getAttribute('data-toggle');
+        if (toggle) { toggleTask(toggle); return; }
+        var del = target.getAttribute('data-delhol');
+        if (del) { deleteHoliday(del); return; }
+        var key = target.getAttribute('data-cfg');
+        if (key) {
+          var i = target.getAttribute('data-i');
+          var input = document.getElementById('cfg-' + i);
+          if (!input) return;
+          target.disabled = true;
+          api('saveConfigValue', { key: key, value: input.value }).then(function (ctx) {
+            if (!ctx || !ctx.ok) throw new Error(ctx && ctx.error ? ctx.error : 'Could not save.');
+            STATE.ctx = ctx;
+            render();
+            toast(key + ' saved.', 'good');
+          }).catch(function (err) {
+            target.disabled = false;
+            toast(err.message, 'bad');
+          });
+        }
+      });
+
+      $('#refresh').addEventListener('click', boot);
+      boot();
+    })();
+  </script>
+</body>
+</html>

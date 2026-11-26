@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Access control</title>
+  <style>
+    :root{
+      --ink:#101828;--muted:#667085;--soft:#98A2B3;--line:#E4E7EC;--line2:#F2F4F7;
+      --bg:#F6F7F9;--brand:#0B5D57;--red:#B42318;--redbg:#FEF3F2;--amber:#B54708;
+      --amberbg:#FFFAEB;--green:#067647;--greenbg:#ECFDF3;--blue:#175CD3;--bluebg:#EFF8FF;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:10px 10px 20px;background:var(--bg);color:var(--ink);
+      font:12.5px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    [hidden]{display:none!important}
+    .head{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:9px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+    .head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .eyebrow{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);font-weight:750;margin-bottom:2px}
+    h1{margin:0;font-size:16px;line-height:1.25;letter-spacing:-.015em;font-weight:680}
+    .sub{font-size:10.5px;color:var(--soft);margin-top:2px;word-break:break-word}
+    .icon{width:27px;height:27px;flex:none;border:1px solid var(--line);border-radius:7px;background:#fff;color:#475467;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center}
+    .icon:hover{background:#F9FAFB}
+    .summary{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}
+    .stat{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 9px}
+    .stat span{display:block;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--soft);font-weight:700}
+    .stat b{display:block;font-size:17px;line-height:1.2;letter-spacing:-.03em;margin-top:1px;font-weight:680}
+    .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px}
+    .card h2{margin:0 0 3px;font-size:12px;letter-spacing:-.01em;font-weight:680}
+    .card .hint{margin:0 0 9px;color:var(--soft);font-size:10.5px}
+    label{display:block;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:8px 0 3px}
+    input,select{width:100%;font:inherit;font-size:12px;color:var(--ink);background:#fff;border:1px solid #D0D5DD;border-radius:7px;padding:7px 8px;min-height:34px}
+    input:focus,select:focus{outline:2px solid rgba(14,124,114,.2);border-color:#0E7C72}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .check{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:11px;color:#344054}
+    .check input{width:16px;min-height:16px;height:16px;margin:0}
+    .actions{display:flex;gap:7px;margin-top:11px}
+    .btn{border:1px solid #D0D5DD;background:#fff;color:#344054;border-radius:7px;padding:8px 11px;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;min-height:34px}
+    .btn:hover{background:#F9FAFB}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.primary:hover{background:#084B46}
+    .btn:disabled{opacity:.55;cursor:default}
+    .list{display:flex;flex-direction:column;gap:6px}
+    .person{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:#fff}
+    .person.off{background:#FCFCFD;opacity:.72}
+    .prow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .who{min-width:0}
+    .name{font-size:12px;font-weight:680;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .email{font-size:10px;color:var(--muted);word-break:break-all;margin-top:1px}
+    .meta{font-size:9.5px;color:var(--soft);margin-top:3px}
+    .badge{display:inline-block;border-radius:999px;padding:1px 6px;font-size:8.5px;font-weight:750;letter-spacing:.04em;text-transform:uppercase;vertical-align:1px;white-space:nowrap}
+    .b-ADMIN{background:#F4F3FF;color:#5925DC}
+    .b-MANAGER{background:var(--bluebg);color:var(--blue)}
+    .b-EMPLOYEE{background:var(--greenbg);color:var(--green)}
+    .b-OFF{background:#F2F4F7;color:#475467}
+    .edit{border:1px solid var(--line);background:#fff;color:#475467;border-radius:6px;padding:4px 7px;font:inherit;font-size:10px;font-weight:650;cursor:pointer;white-space:nowrap}
+    .edit:hover{background:#F9FAFB}
+    .empty{border:1px dashed #D0D5DD;border-radius:9px;padding:18px 12px;text-align:center;color:var(--muted);font-size:11px}
+    .empty b{display:block;color:var(--ink);font-size:12px;margin-bottom:3px}
+    .msg{border-radius:8px;padding:8px 10px;font-size:11px;margin-bottom:8px}
+    .msg.err{background:var(--redbg);color:var(--red);border:1px solid #FECDCA}
+    .msg.ok{background:var(--greenbg);color:var(--green);border:1px solid #ABEFC6}
+    .toast{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+    .toast div{background:#101828;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;box-shadow:0 8px 20px rgba(16,24,40,.25)}
+    .toast div.bad{background:#912018}
+    .toast div.good{background:#054F31}
+    .loading{display:flex;align-items:center;gap:7px;padding:26px 6px;color:var(--muted);font-size:11px}
+    .spinner{width:13px;height:13px;border:2px solid #D0D5DD;border-top-color:var(--brand);border-radius:50%;animation:s .7s linear infinite}
+    @keyframes s{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="head">
+    <div class="head-row">
+      <div style="min-width:0">
+        <div class="eyebrow" id="company">Allo Ops · Admin</div>
+        <h1>Access control</h1>
+        <div class="sub" id="who">Checking your account…</div>
+      </div>
+      <button class="icon" id="refresh" type="button" title="Refresh" aria-label="Refresh">&#8635;</button>
+    </div>
+  </div>
+
+  <div id="content"><div class="loading"><span class="spinner"></span> Loading…</div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      'use strict';
+      var STATE = { ctx: null, editing: '' };
+      var $ = function (sel) { return document.querySelector(sel); };
+
+      function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function api(name) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return new Promise(function (resolve, reject) {
+          var runner = google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(function (err) {
+              reject(new Error(err && err.message ? err.message : 'Request failed.'));
+            });
+          runner[name].apply(runner, args);
+        });
+      }
+
+      function toast(msg, kind) {
+        var el = document.createElement('div');
+        el.className = kind || '';
+        el.textContent = msg;
+        $('#toast').appendChild(el);
+        setTimeout(function () {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity .2s';
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+        }, 3200);
+      }
+
+      function roleBadge(role, active) {
+        if (!active) return '<span class="badge b-OFF">Inactive</span>';
+        return '<span class="badge b-' + esc(role) + '">' + esc(role) + '</span>';
+      }
+
+      function boot() {
+        api('getAdminContext').then(function (ctx) {
+          if (!ctx || !ctx.ok) return renderError(ctx || { error: 'Could not load access control.' });
+          STATE.ctx = ctx;
+          render();
+        }).catch(function (err) { renderError({ error: err.message }); });
+      }
+
+      function renderError(data) {
+        $('#who').textContent = '';
+        $('#content').innerHTML = '<div class="card"><h2>' +
+          (data && data.code === 'FORBIDDEN' ? 'Admins only' : 'Access unavailable') + '</h2>' +
+          '<p class="hint">' + esc(data && data.error ? data.error : 'Could not load this panel.') + '</p>' +
+          '<button class="btn" id="retry" type="button">Try again</button></div>';
+        var retry = document.getElementById('retry');
+        if (retry) retry.addEventListener('click', boot);
+      }
+
+      function render() {
+        var ctx = STATE.ctx;
+        $('#company').textContent = (ctx.company || 'Allo Innoware') + ' · Admin';
+        var me = ctx.people.filter(function (p) { return p.email === ctx.email; })[0] || {};
+        $('#who').textContent = 'Signed in as ' + ctx.email + ' · ' + (me.role || 'ADMIN');
+
+        var s = ctx.stats || {};
+        var html = '<div class="summary">' +
+          '<div class="stat"><span>Admins</span><b>' + esc(s.admins || 0) + '</b></div>' +
+          '<div class="stat"><span>Managers</span><b>' + esc(s.managers || 0) + '</b></div>' +
+          '<div class="stat"><span>Employees</span><b>' + esc(s.employees || 0) + '</b></div>' +
+          '<div class="stat"><span>Inactive</span><b>' + esc(s.inactive || 0) + '</b></div>' +
+          '</div>';
+
+        html += '<div class="card" id="formCard"></div>';
+        html += '<div class="card"><h2>People</h2><p class="hint">Deactivate someone to block app access. Their task rows are not deleted.</p><div class="list" id="people"></div></div>';
+        $('#content').innerHTML = html;
+        renderForm();
+        renderPeople();
+      }
+
+      function managerOptions(selected) {
+        var people = STATE.ctx.managers || [];
+        var html = '<option value="">No manager</option>';
+        var found = false;
+        people.forEach(function (p) {
+          if (p.email === selected) found = true;
+          html += '<option value="' + esc(p.email) + '"' + (p.email === selected ? ' selected' : '') + '>' +
+            esc(p.name || p.email) + ' · ' + esc(p.role) + '</option>';
+        });
+        if (selected && !found) {
+          html += '<option value="' + esc(selected) + '" selected>' + esc(selected) + '</option>';
+        }
+        return html;
+      }
+
+      function renderForm() {
+        var editing = STATE.editing ? STATE.ctx.people.filter(function (p) {
+          return p.email === STATE.editing;
+        })[0] : null;
+        var isEdit = !!editing;
+        $('#formCard').innerHTML =
+          '<h2>' + (isEdit ? 'Edit access' : 'Add a person') + '</h2>' +
+          '<p class="hint">' + (isEdit ? 'Change role, reporting manager, or active status.' : 'Add someone by their Google account email, then assign their role.') + '</p>' +
+          '<div id="formMsg"></div>' +
+          '<label for="fEmail">Email</label>' +
+          '<input id="fEmail" type="email" autocomplete="off" ' + (isEdit ? 'readonly' : '') + ' placeholder="name@company.com" value="' + esc(isEdit ? editing.email : '') + '">' +
+          '<label for="fName">Name</label>' +
+          '<input id="fName" type="text" maxlength="120" placeholder="Display name" value="' + esc(isEdit ? editing.name : '') + '">' +
+          '<div class="two"><div><label for="fRole">Role</label><select id="fRole">' +
+          (STATE.ctx.roles || ['ADMIN', 'MANAGER', 'EMPLOYEE']).map(function (r) {
+            return '<option value="' + esc(r) + '"' + (isEdit && editing.role === r ? ' selected' : '') + '>' + esc(r) + '</option>';
+          }).join('') + '</select></div>' +
+          '<div><label for="fManager">Manager</label><select id="fManager">' +
+          managerOptions(isEdit ? editing.managerEmail : '') + '</select></div></div>' +
+          '<label class="check"><input id="fActive" type="checkbox" ' + (!isEdit || editing.active ? 'checked' : '') + '> Active</label>' +
+          '<div class="actions"><button class="btn primary" id="save" type="button">' + (isEdit ? 'Save changes' : 'Add person') + '</button>' +
+          (isEdit ? '<button class="btn" id="cancel" type="button">Cancel</button>' : '') + '</div>' +
+          '<p class="hint" style="margin:9px 0 0">Only admins can grant ADMIN. The last active admin cannot be removed or demoted.</p>';
+
+        $('#fRole').value = isEdit ? editing.role : 'EMPLOYEE';
+        $('#save').addEventListener('click', save);
+        var cancel = document.getElementById('cancel');
+        if (cancel) cancel.addEventListener('click', function () { STATE.editing = ''; renderForm(); });
+      }
+
+      function renderPeople() {
+        var rows = STATE.ctx.people || [];
+        if (!rows.length) {
+          $('#people').innerHTML = '<div class="empty"><b>No people yet</b>Add the first person above.</div>';
+          return;
+        }
+        $('#people').innerHTML = rows.map(function (p) {
+          var mgr = p.managerEmail ? ('Manager: ' + p.managerEmail) : 'No manager set';
+          return '<div class="person ' + (p.active ? '' : 'off') + '">' +
+            '<div class="prow"><div class="who"><div class="name">' + esc(p.name || p.email) + '</div>' +
+            '<div class="email">' + esc(p.email) + '</div>' +
+            '<div class="meta">' + roleBadge(p.role, p.active) + ' <span>' + esc(mgr) + '</span></div></div>' +
+            '<button class="edit" type="button" data-edit="' + esc(p.email) + '">Edit</button></div></div>';
+        }).join('');
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'), function (btn) {
+          btn.addEventListener('click', function () {
+            STATE.editing = btn.getAttribute('data-edit');
+            renderForm();
+            $('#formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        });
+      }
+
+      function setMsg(text, kind) {
+        var el = document.getElementById('formMsg');
+        if (!el) return;
+        el.innerHTML = text ? '<div class="msg ' + (kind || '') + '">' + esc(text) + '</div>' : '';
+      }
+
+      function save() {
+        var btn = $('#save');
+        var payload = {
+          email: $('#fEmail').value.trim(),
+          name: $('#fName').value.trim(),
+          role: $('#fRole').value,
+          managerEmail: $('#fManager').value,
+          active: $('#fActive').checked
+        };
+        if (!payload.email) return setMsg('Enter an email address.', 'err');
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(payload.email)) return setMsg('Enter a valid email address.', 'err');
+
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        setMsg('');
+        api('savePerson', payload).then(function (ctx) {
+          if (!ctx || !ctx.ok) throw new Error(ctx && ctx.error ? ctx.error : 'Could not save.');
+          STATE.ctx = ctx;
+          STATE.editing = '';
+          render();
+          toast('Access saved.', 'good');
+        }).catch(function (err) {
+          setMsg(err.message, 'err');
+          btn.disabled = false;
+          btn.textContent = STATE.editing ? 'Save changes' : 'Add person';
+        });
+      }
+
+      $('#refresh').addEventListener('click', boot);
+      boot();
+    })();
+  </script>
+</body>
+</html>

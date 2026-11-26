@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --ink: #101828;
+      --muted: #475467;
+      --soft: #667085;
+      --line: #EAECF0;
+      --soft-bg: #F9FAFB;
+      --accent: #1F6FEB;
+      --accent-dark: #1859C4;
+      --danger: #B42318;
+      --danger-bg: #FEF3F2;
+      --warn: #B54708;
+      --warn-bg: #FFFAEB;
+      --ok: #067647;
+      --ok-bg: #ECFDF3;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink); background: #FFFFFF; font-size: 14px; line-height: 1.5;
+      padding: 16px 16px 28px;
+    }
+    header { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .eyebrow {
+      font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 2px;
+    }
+    h1 { font-size: 19px; margin: 0; letter-spacing: -.01em; }
+    .who { color: var(--muted); font-size: 12px; margin-top: 4px; word-break: break-all; }
+    .role {
+      display: inline-block; font-size: 9.5px; font-weight: 750; letter-spacing: .06em;
+      text-transform: uppercase; padding: 2px 7px; border-radius: 999px; vertical-align: 1px;
+    }
+    .role-ADMIN { background: #F4F3FF; color: #5925DC; }
+    .role-MANAGER { background: #EFF8FF; color: #175CD3; }
+    .role-EMPLOYEE { background: var(--ok-bg); color: var(--ok); }
+    .banner {
+      display: none; margin-top: 12px; padding: 10px 12px; border-radius: var(--radius);
+      background: var(--danger-bg); color: var(--danger); border: 1px solid #FECDCA; font-size: 13px;
+    }
+    .banner.show { display: block; }
+    nav { display: flex; gap: 5px; margin: 14px 0 12px; flex-wrap: wrap; }
+    nav button {
+      appearance: none; border: 1px solid var(--line); background: #fff; color: var(--muted);
+      padding: 7px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 650; cursor: pointer;
+      min-height: 34px; display: inline-flex; align-items: center; gap: 4px;
+    }
+    nav button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    nav button .n {
+      display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 999px;
+      background: #F2F4F7; color: var(--muted); font-size: 10px; line-height: 16px; text-align: center;
+    }
+    nav button[aria-pressed="true"] .n { background: rgba(255,255,255,.2); color: #fff; }
+    nav button .n.alert { background: var(--danger-bg); color: var(--danger); }
+    .section-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: 0 0 10px;
+    }
+    .section-head h2 { font-size: 13px; margin: 0; letter-spacing: -.01em; }
+    .section-head p { margin: 2px 0 0; font-size: 11px; color: var(--soft); }
+    .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+    .chips button {
+      border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 999px;
+      padding: 5px 9px; font: inherit; font-size: 10.5px; font-weight: 650; cursor: pointer;
+    }
+    .chips button[aria-pressed="true"] { background: #EFF8FF; border-color: #B2DDFF; color: #175CD3; }
+    .card {
+      border: 1px solid var(--line); border-left: 4px solid var(--line);
+      border-radius: var(--radius); padding: 13px; margin-bottom: 10px; background: #fff;
+    }
+    .card.overdue { border-left-color: var(--danger); }
+    .card.today { border-left-color: #DC6803; }
+    .card.upcoming { border-left-color: var(--accent); }
+    .card.escalated { border-left-color: var(--danger); background: #FFFCFC; }
+    .card.acked { border-left-color: var(--ok); }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .row.right { justify-content: flex-end; }
+    .pill {
+      font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+    }
+    .pill.overdue { background: var(--danger-bg); color: var(--danger); }
+    .pill.today { background: var(--warn-bg); color: var(--warn); }
+    .pill.upcoming { background: #EFF8FF; color: #175CD3; }
+    .pill.escalated { background: var(--danger); color: #fff; }
+    .pill.acked { background: var(--ok-bg); color: var(--ok); }
+    .pill.pending { background: var(--warn-bg); color: var(--warn); }
+    .pill.approved { background: var(--ok-bg); color: var(--ok); }
+    .pill.rejected { background: var(--danger-bg); color: var(--danger); }
+    .pill.withdrawn { background: #F2F4F7; color: #475467; }
+    .cycle { color: var(--soft); font-size: 10.5px; white-space: nowrap; }
+    .name { font-size: 14.5px; font-weight: 700; margin: 6px 0 2px; letter-spacing: -.01em; }
+    .meta { color: var(--muted); font-size: 11.5px; }
+    .meta b { color: var(--ink); font-weight: 650; }
+    .employee { font-size: 12px; color: var(--ink); font-weight: 650; margin-top: 5px; }
+    .sop {
+      margin-top: 8px; padding: 8px 10px; background: var(--soft-bg); border-radius: 8px;
+      color: var(--muted); font-size: 11.5px;
+    }
+    .reason {
+      margin-top: 8px; padding: 8px 10px; background: var(--soft-bg); border-radius: 8px;
+      color: var(--muted); font-size: 11.5px; white-space: pre-wrap; word-break: break-word;
+    }
+    .note { color: var(--soft); font-size: 10.5px; margin-top: 6px; }
+    form { margin-top: 10px; }
+    label { display: block; font-size: 11.5px; font-weight: 650; margin: 10px 0 4px; }
+    .hint { color: var(--soft); font-weight: 400; }
+    input, select, textarea {
+      width: 100%; font: inherit; color: var(--ink); background: #fff;
+      border: 1px solid #D0D5DD; border-radius: 8px; padding: 9px 10px; min-height: 40px;
+    }
+    textarea { resize: vertical; min-height: 62px; }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent);
+    }
+    input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--danger); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px; }
+    button.btn {
+      min-height: 38px; border: 1px solid #D0D5DD; border-radius: 8px; background: #fff;
+      color: #344054; font: inherit; font-size: 12px; font-weight: 700; padding: 8px 11px; cursor: pointer;
+    }
+    button.btn:hover { background: var(--soft-bg); }
+    button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.btn.primary:hover { background: var(--accent-dark); }
+    button.btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+    button.btn.danger { background: #fff; border-color: #FDA29B; color: var(--danger); }
+    button.btn:disabled { opacity: .55; cursor: default; }
+    button.btn.wide { width: 100%; margin-top: 12px; min-height: 42px; }
+    button.btn.small { min-height: 30px; padding: 4px 8px; font-size: 10.5px; }
+    .err { color: var(--danger); font-size: 11.5px; margin-top: 6px; display: none; }
+    .err.show { display: block; }
+    .success {
+      margin-top: 10px; padding: 11px 12px; border-radius: 8px; background: var(--ok-bg);
+      color: var(--ok); font-size: 12.5px; border: 1px solid #ABEFC6;
+    }
+    .empty { text-align: center; padding: 32px 12px; color: var(--muted); }
+    .empty b { display: block; color: var(--ink); font-size: 14.5px; margin-bottom: 4px; }
+    .empty p { margin: 0 0 4px; font-size: 12px; }
+    .skeleton { height: 92px; border-radius: var(--radius); background: #F2F4F7; margin-bottom: 10px; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+    @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 10px; }
+    .stat { border: 1px solid var(--line); border-radius: 9px; padding: 8px 9px; background: #fff; }
+    .stat span { display: block; font-size: 8.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--soft); font-weight: 700; }
+    .stat b { display: block; font-size: 17px; line-height: 1.2; margin-top: 1px; font-weight: 680; }
+    .sheet-wrap {
+      overflow: auto; max-height: 62vh; border: 1px solid var(--line); border-radius: 9px; background: #fff;
+    }
+    table.sheet { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+    table.sheet th {
+      text-align: left; padding: 7px 8px; background: var(--soft-bg); color: var(--soft);
+      font-size: 8.5px; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap;
+      border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1;
+    }
+    table.sheet td {
+      padding: 7px 8px; border-top: 1px solid var(--line); color: var(--muted);
+      white-space: nowrap; vertical-align: top;
+    }
+    table.sheet tr:first-child td { border-top: 0; }
+    table.sheet td .pill { font-size: 8.5px; padding: 2px 6px; }
+    .sheet-note { color: var(--soft); font-size: 10px; margin-top: 7px; }
+    .sheet-list { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; margin-bottom: 10px; background: #fff; }
+    .sheet-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px; border-top: 1px solid var(--line); }
+    .sheet-row:first-child { border-top: 0; }
+    .sheet-row[aria-current="true"] { background: #EFF8FF; }
+    .sheet-pick {
+      flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 4px 0;
+      font: inherit; color: var(--ink); cursor: pointer;
+    }
+    .sheet-pick b { display: block; font-size: 12px; font-weight: 700; }
+    .sheet-pick span { display: block; font-size: 10px; color: var(--soft); }
+    #toast {
+      position: fixed; left: 16px; right: 16px; bottom: 16px; background: var(--ink); color: #fff;
+      padding: 12px 14px; border-radius: 10px; font-size: 12.5px; box-shadow: 0 8px 24px rgba(16,24,40,.18);
+      opacity: 0; transform: translateY(8px); transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error { background: var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow" id="company">Allo Innoware · Recurring Ops</div>
+    <h1 id="title">My workspace</h1>
+    <div class="who" id="who">Checking your account…</div>
+  </header>
+
+  <div class="banner" id="banner" role="alert"></div>
+  <nav id="tabs" aria-label="Workspace sections"></nav>
+  <main id="content" aria-busy="true">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    var STATE = {
+      data: null, section: 'tasks', filter: 'all', reviewFilter: 'attention', rsFilter: 'all', loaded: false,
+      sheetKind: 'tasks', sheetData: null, sheetError: '', sheetLoading: false
+    };
+    var content = document.getElementById('content');
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function uuid() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function todayIso() {
+      var d = new Date();
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    }
+    function parseIsoDate(s) {
+      var p = String(s || '').split('-');
+      if (p.length !== 3) return null;
+      return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    }
+    function dayCount(a, b) {
+      var from = parseIsoDate(a), to = parseIsoDate(b);
+      if (!from || !to) return 0;
+      return Math.round((to - from) / 86400000) + 1;
+    }
+
+    function toast(message, isError) {
+      var t = document.getElementById('toast');
+      t.textContent = message;
+      t.className = 'show' + (isError ? ' error' : '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function () { t.className = ''; }, 4200);
+    }
+
+    function call(name) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      return new Promise(function (resolve, reject) {
+        var runner = google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(function (err) {
+            reject(new Error(err && err.message ? err.message : 'Request failed.'));
+          });
+        runner[name].apply(runner, args);
+      });
+    }
+
+    function sameDay(a, b) {
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    function bucketOf(item) {
+      if (item.status === 'ESCALATED' || item.status === 'MISSED') return 'overdue';
+      var due = new Date(item.dueAtIso);
+      var now = new Date();
+      if (due.getTime() < now.getTime()) return 'overdue';
+      if (sameDay(due, now)) return 'today';
+      return 'upcoming';
+    }
+
+    function overdueText(item) {
+      var due = new Date(item.dueAtIso);
+      var mins = Math.max(0, Math.round((Date.now() - due.getTime()) / 60000));
+      if (mins < 60) return mins + ' min overdue';
+      var h = Math.floor(mins / 60), m = mins % 60;
+      if (h < 24) return h + 'h ' + m + 'm overdue';
+      return Math.floor(h / 24) + 'd ' + (h % 24) + 'h overdue';
+    }
+
+    function taskPill(item, bucket) {
+      if (item.status === 'ESCALATED') return '<span class="pill escalated">Escalated</span>';
+      if (bucket === 'overdue') return '<span class="pill overdue">Overdue</span>';
+      if (bucket === 'today') return '<span class="pill today">Due today</span>';
+      return '<span class="pill upcoming">Upcoming</span>';
+    }
+
+    function statusPill(status) {
+      var s = String(status || '').toUpperCase();
+      var cls = s === 'OPEN' ? 'upcoming' : s === 'MISSED' ? 'overdue' : s === 'ESCALATED' ? 'escalated'
+        : s === 'COMPLETED' ? 'approved' : 'pending';
+      return '<span class="pill ' + cls + '">' + esc(s) + '</span>';
+    }
+
+    function leavePill(status) {
+      var s = String(status || '').toUpperCase();
+      return '<span class="pill ' + s.toLowerCase() + '">' + esc(s) + '</span>';
+    }
+
+    function roleLabel(role) {
+      return role === 'ADMIN' ? 'Admin' : role === 'MANAGER' ? 'Manager' : 'Employee';
+    }
+
+    function render(data) {
+      var banner = document.getElementById('banner');
+      content.setAttribute('aria-busy', 'false');
+      if (!data || !data.ok) {
+        document.getElementById('who').textContent = 'Not available';
+        banner.textContent = (data && data.error) || 'Could not load your workspace.';
+        banner.className = 'banner show';
+        document.getElementById('tabs').innerHTML = '';
+        content.innerHTML = '<div class="empty"><b>Nothing loaded</b><p>Ask an admin to add your Google account, then reopen from the Allo Ops menu.</p></div>';
+        return;
+      }
+
+      banner.className = 'banner';
+      STATE.data = data;
+      var isManager = data.role === 'MANAGER' || data.role === 'ADMIN';
+      var isAdmin = data.role === 'ADMIN';
+      STATE.sheetData = null;
+      STATE.sheetError = '';
+      STATE.sheetLoading = false;
+      var tag = data.demoMode ? ' · demo view' : (data.identityFallback ? ' · demo identity' : '');
+      document.getElementById('company').textContent = (data.company || 'Allo Innoware') + ' · Recurring Ops';
+      document.getElementById('who').innerHTML = esc(data.email) + ' · <span class="role role-' +
+        esc(data.role) + '">' + esc(roleLabel(data.role)) + '</span>' + esc(tag);
+
+      if (!STATE.loaded) {
+        STATE.section = isManager ? 'review' : 'tasks';
+        STATE.sheetKind = isManager ? 'dashboard' : 'tasks';
+        STATE.loaded = true;
+      }
+
+      document.getElementById('title').textContent = isAdmin
+        ? 'Admin workspace'
+        : isManager ? 'Manager workspace' : 'Employee workspace';
+      renderTabs();
+      renderSection();
+    }
+
+    function tabButton(id, label, count, alert) {
+      var pressed = STATE.section === id;
+      var n = (count === 0 || count == null) ? '' : '<span class="n' + (alert ? ' alert' : '') + '">' + esc(count) + '</span>';
+      return '<button type="button" data-section="' + id + '" aria-pressed="' + pressed + '">' + esc(label) + n + '</button>';
+    }
+
+    function renderTabs() {
+      var d = STATE.data, c = d.counts || {};
+      var role = d.role;
+      var isManager = role === 'MANAGER' || role === 'ADMIN';
+      var html = '';
+      if (role !== 'MANAGER') html += tabButton('tasks', 'Tasks', c.tasks, false);
+      if (isManager) html += tabButton('review', 'Review', c.reviewPending, true);
+      if (role === 'EMPLOYEE') html += tabButton('reviewStatus', 'Review status', null, false);
+      html += tabButton('sheets', 'Sheets', null, false);
+      html += tabButton('leave', 'Leave', c.leavePending, false);
+      if (isManager) html += tabButton('approvals', 'Team leave', c.approvals, true);
+      if (isManager) html += tabButton('admin', 'Admin', null, false);
+      document.getElementById('tabs').innerHTML = html;
+    }
+
+    function renderSection() {
+      var d = STATE.data;
+      var isManager = d.role === 'MANAGER' || d.role === 'ADMIN';
+      if (STATE.section === 'tasks' && d.role === 'MANAGER') STATE.section = 'review';
+      if (STATE.section === 'review' && !isManager) STATE.section = 'tasks';
+      if (STATE.section === 'reviewStatus' && d.role !== 'EMPLOYEE') STATE.section = 'tasks';
+      if (STATE.section === 'approvals' && !isManager) STATE.section = 'leave';
+      if (STATE.section === 'admin' && !isManager) STATE.section = 'tasks';
+
+      if (STATE.section === 'tasks') return renderTasks();
+      if (STATE.section === 'reviewStatus') return renderReviewStatus();
+      if (STATE.section === 'review') return renderReview();
+      if (STATE.section === 'sheets') return renderSheets();
+      if (STATE.section === 'leave') return renderLeave();
+      if (STATE.section === 'approvals') return renderApprovals();
+      return renderAdmin();
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* My tasks                                                          */
+    /* ---------------------------------------------------------------- */
+
+    function renderTasks() {
+      var d = STATE.data;
+      var items = d.tasks || [];
+      var counts = { all: items.length, overdue: 0, today: 0, upcoming: 0 };
+      items.forEach(function (i) { counts[bucketOf(i)]++; });
+
+      var head = '<div class="section-head"><div><h2>My tasks</h2><p>' +
+        (items.length ? 'Only work assigned to you appears here.' : 'Nothing needs your attention.') +
+        '</p></div></div>';
+
+      if (!items.length) {
+        content.innerHTML = head + '<div class="empty"><b>Nothing pending</b><p>' +
+          esc(d.taskMessage || 'You are up to date.') + '</p></div>';
+        return;
+      }
+
+      var chips = '<div class="chips">' +
+        ['all', 'overdue', 'today', 'upcoming'].map(function (k) {
+          var labels = { all: 'All', overdue: 'Overdue', today: 'Due today', upcoming: 'Upcoming' };
+          return '<button type="button" data-filter="' + k + '" aria-pressed="' +
+            (STATE.filter === k) + '">' + labels[k] + ' (' + counts[k] + ')</button>';
+        }).join('') + '</div>';
+
+      var visible = items.filter(function (i) {
+        return STATE.filter === 'all' || bucketOf(i) === STATE.filter;
+      });
+
+      content.innerHTML = head + chips + (visible.length
+        ? visible.map(taskCard).join('')
+        : '<div class="empty"><b>Nothing in this view</b><p>Switch the filter to see your other tasks.</p></div>');
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Review status (employee)                                          */
+    /* ---------------------------------------------------------------- */
+
+    function reviewStatePill(state) {
+      var map = {
+        REVIEWED: ['approved', 'Reviewed'],
+        AWAITING: ['pending', 'Awaiting review'],
+        LATE: ['overdue', 'Late'],
+        OPEN: ['upcoming', 'In progress']
+      };
+      var v = map[state] || map.OPEN;
+      return '<span class="pill ' + v[0] + '">' + v[1] + '</span>';
+    }
+
+    function renderReviewStatus() {
+      var rows = STATE.data.reviewStatus || [];
+      var counts = { all: rows.length, REVIEWED: 0, AWAITING: 0, LATE: 0, OPEN: 0 };
+      rows.forEach(function (r) { if (counts[r.reviewState] != null) counts[r.reviewState]++; });
+
+      var head = '<div class="section-head"><div><h2>Review status</h2><p>' +
+        (rows.length ? 'Whether your manager has reviewed each cycle. Latest 50.' : 'Nothing submitted yet.') +
+        '</p></div></div>';
+
+      if (!rows.length) {
+        content.innerHTML = head + '<div class="empty"><b>No cycles yet</b><p>' +
+          'Once your tasks run, their review status appears here.</p></div>';
+        return;
+      }
+
+      var filters = [
+        ['all', 'All (' + counts.all + ')'],
+        ['AWAITING', 'Awaiting (' + counts.AWAITING + ')'],
+        ['REVIEWED', 'Reviewed (' + counts.REVIEWED + ')'],
+        ['LATE', 'Late (' + counts.LATE + ')']
+      ];
+      var chips = '<div class="chips">' + filters.map(function (f) {
+        return '<button type="button" data-rsfilter="' + f[0] + '" aria-pressed="' +
+          (STATE.rsFilter === f[0]) + '">' + f[1] + '</button>';
+      }).join('') + '</div>';
+
+      var visible = rows.filter(function (r) {
+        return STATE.rsFilter === 'all' || r.reviewState === STATE.rsFilter;
+      });
+
+      var table = visible.length
+        ? sheetTable(
+            ['Task', 'Cycle', 'Due', 'Work status', 'Review', 'Reviewed at', 'Ticket'],
+            visible.map(function (r) {
+              return [
+                esc(r.taskName),
+                '#' + esc(r.cycleNo),
+                esc(r.dueLabel),
+                statusPill(r.status),
+                reviewStatePill(r.reviewState),
+                esc(r.reviewedLabel || '—'),
+                esc(r.ticket || '—')
+              ];
+            })
+          )
+        : '<div class="empty"><b>Nothing in this view</b><p>Switch the filter to see the other cycles.</p></div>';
+
+      content.innerHTML = head + chips + table;
+    }
+
+    function taskCard(item) {
+      var b = bucketOf(item);
+      var cls = 'card ' + b + (item.status === 'ESCALATED' ? ' escalated' : '');
+      var formHtml = '';
+
+      if (item.canComplete) {
+        formHtml = item.requiresTicket
+          ? '<form data-form="task" data-cycle="' + esc(item.cycleId) + '" novalidate>' +
+              '<label for="t-' + esc(item.cycleId) + '">' + esc(item.proofLabel || 'Ticket ID') + '</label>' +
+              '<input id="t-' + esc(item.cycleId) + '" name="ticket" type="text" autocomplete="off" placeholder="e.g. OPS-10234" maxlength="60" required>' +
+              '<label for="n-' + esc(item.cycleId) + '">Note <span class="hint">(optional)</span></label>' +
+              '<input id="n-' + esc(item.cycleId) + '" name="note" type="text" maxlength="200" placeholder="Anything the manager should know">' +
+              '<label for="u-' + esc(item.cycleId) + '">Proof link <span class="hint">(optional, https)</span></label>' +
+              '<input id="u-' + esc(item.cycleId) + '" name="url" type="url" maxlength="500" placeholder="https://…">' +
+            '</form>'
+          : '<form data-form="task" data-cycle="' + esc(item.cycleId) + '" novalidate>' +
+              '<label for="n-' + esc(item.cycleId) + '">What did you post? <span class="hint">(10+ characters)</span></label>' +
+              '<textarea id="n-' + esc(item.cycleId) + '" name="note" maxlength="200" required placeholder="EOD update posted: 6 orders dispatched, 1 delay flagged"></textarea>' +
+              '<label for="u-' + esc(item.cycleId) + '">Screenshot link <span class="hint">(optional, https)</span></label>' +
+              '<input id="u-' + esc(item.cycleId) + '" name="url" type="url" maxlength="500" placeholder="https://…">' +
+            '</form>';
+      }
+
+      return '<article class="' + cls + '" data-card="' + esc(item.cycleId) + '">' +
+        '<div class="row">' + taskPill(item, b) + '<span class="cycle">Cycle #' + esc(item.cycleNo) + '</span></div>' +
+        '<div class="name">' + esc(item.taskName) + '</div>' +
+        (item.employee && item.employeeEmail !== STATE.data.email
+          ? '<div class="employee">' + esc(item.employee) + '</div>' : '') +
+        '<div class="meta">Due <b>' + esc(item.dueLabel) + '</b>' +
+          (b === 'overdue' ? ' · <b>' + esc(overdueText(item)) + '</b>' : '') + '</div>' +
+        '<div class="meta">Required: ' + esc(item.proofLabel || 'Proof') +
+          (item.lastTicket ? ' · last: <b>' + esc(item.lastTicket) + '</b>' : '') + '</div>' +
+        (item.notes ? '<div class="sop">' + esc(item.notes) + '</div>' : '') +
+        (item.canComplete
+          ? formHtml + '<div class="err" role="alert"></div>' +
+            '<button type="button" class="btn primary wide" data-action="complete" data-cycle="' +
+              esc(item.cycleId) + '">Mark complete</button>'
+          : '<div class="note">Demo view: only the assigned employee can complete this task.</div>') +
+        '</article>';
+    }
+
+    function submitTask(cardEl, cycleId) {
+      if (!cardEl) return;
+      var form = cardEl.querySelector('form');
+      if (!form) return;
+      var ticketEl = form.elements.ticket;
+      var noteEl = form.elements.note;
+      var urlEl = form.elements.url;
+      var ticket = ticketEl ? ticketEl.value.trim() : '';
+      var note = noteEl ? noteEl.value.trim() : '';
+      var url = urlEl ? urlEl.value.trim() : '';
+      var err = cardEl.querySelector('.err');
+      function fail(message) {
+        if (err) { err.textContent = message; err.className = 'err show'; }
+        toast(message, true);
+      }
+      if (err) err.className = 'err';
+      if (ticketEl) {
+        if (!ticket) return fail('Enter the ticket ID.');
+        if (!/^[A-Za-z0-9][A-Za-z0-9_-]{2,59}$/.test(ticket)) return fail('Ticket ID looks invalid. Example: OPS-10234');
+      } else if (note.length < 10) {
+        return fail('Add a short summary (at least 10 characters).');
+      }
+      if (url && !/^https:\/\//i.test(url)) return fail('Proof link must start with https://.');
+
+      var btn = cardEl.querySelector('[data-action="complete"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+      call('submitCompletion', cycleId, ticket, note, url, uuid()).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not save.');
+        toast(res.message || 'Task completed.', false);
+        load();
+      }).catch(function (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Mark complete'; }
+        fail(e.message);
+      });
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Manager review                                                    */
+    /* ---------------------------------------------------------------- */
+
+    function renderReview() {
+      var d = STATE.data;
+      var all = d.review || [];
+      var attention = all.filter(function (r) {
+        return !r.ackedAt && (r.overdue || r.status === 'MISSED' || r.status === 'ESCALATED');
+      });
+      var visible = STATE.reviewFilter === 'attention' ? attention : all;
+      if (STATE.reviewFilter === 'attention' && !attention.length) STATE.reviewFilter = 'all';
+      if (STATE.reviewFilter === 'all') visible = all;
+
+      var head = '<div class="section-head"><div><h2>Team review</h2><p>' +
+        (d.admin ? 'Every active task across the company.' : 'Your team’s tasks. Acknowledge, or send a reminder.') +
+        '</p></div><div style="display:flex;gap:6px">' +
+        '<button type="button" class="btn" data-action="refreshWorkspace">Refresh</button>' +
+        '<button type="button" class="btn primary" data-action="openManage">' +
+        (d.admin ? 'New task' : 'Assign task') + '</button></div></div>';
+
+      var chips = '<div class="chips">' +
+        '<button type="button" data-rfilter="attention" aria-pressed="' + (STATE.reviewFilter === 'attention') + '">Needs attention (' + attention.length + ')</button>' +
+        '<button type="button" data-rfilter="all" aria-pressed="' + (STATE.reviewFilter === 'all') + '">All active (' + all.length + ')</button>' +
+        '</div>';
+
+      if (!all.length) {
+        content.innerHTML = head + '<div class="empty"><b>No active cycles</b><p>Nothing is open for your team right now.</p></div>';
+        return;
+      }
+      if (!visible.length) {
+        content.innerHTML = head + chips + '<div class="empty"><b>Nothing needs attention</b><p>Every active task is either upcoming or already acknowledged.</p></div>';
+        return;
+      }
+
+      var sorted = visible.slice().sort(function (a, b) {
+        if (!!a.overdue !== !!b.overdue) return a.overdue ? -1 : 1;
+        return new Date(a.dueIso) - new Date(b.dueIso);
+      });
+      content.innerHTML = head + chips + sorted.map(reviewCard).join('');
+    }
+
+    function reviewCard(item) {
+      var cls = 'card' + (item.ackedAt ? ' acked' : item.overdue ? ' overdue' : '');
+      return '<article class="' + cls + '" data-review="' + esc(item.cycleId) + '">' +
+        '<div class="row">' + statusPill(item.status) +
+          '<span class="cycle">Cycle #' + esc(item.cycleNo) + '</span></div>' +
+        '<div class="name">' + esc(item.taskName) + '</div>' +
+        '<div class="employee">' + esc(item.employee) + ' · ' + esc(item.employeeEmail) + '</div>' +
+        '<div class="meta">Due <b>' + esc(item.dueLabel) + '</b>' +
+          (item.overdue ? ' · <b>' + esc(item.overdueLabel) + '</b>' : '') + '</div>' +
+        '<div class="meta">Grace ends <b>' + esc(item.graceLabel) + '</b></div>' +
+        (item.ackedAt
+          ? '<div class="note">Acknowledged ' + esc(item.ackedLabel) + '</div>'
+          : '<div class="note">Not acknowledged yet.</div>') +
+        '<div class="actions">' +
+          '<button type="button" class="btn ' + (item.ackedAt ? '' : 'primary') + '" data-action="ack" data-cycle="' +
+            esc(item.cycleId) + '"' + (item.ackedAt ? ' disabled' : '') + '>' +
+            (item.ackedAt ? 'Acknowledged' : 'Acknowledge') + '</button>' +
+          '<button type="button" class="btn" data-action="remind" data-cycle="' + esc(item.cycleId) +
+            '" data-name="' + esc(item.taskName) + '">Send reminder</button>' +
+        '</div>' +
+        '<div class="err" role="alert"></div>' +
+        '</article>';
+    }
+
+    function ackReview(cardEl, cycleId) {
+      var btn = cardEl.querySelector('[data-action="ack"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+      call('ackCycleFromSidebar', cycleId).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not acknowledge.');
+        toast(res.message || 'Review acknowledged.', false);
+        load();
+      }).catch(function (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Acknowledge'; }
+        var err = cardEl.querySelector('.err');
+        if (err) { err.textContent = e.message; err.className = 'err show'; }
+        toast(e.message, true);
+      });
+    }
+
+    function remind(cardEl, cycleId) {
+      var btn = cardEl.querySelector('[data-action="remind"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      call('sendCycleReminder', cycleId).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not send.');
+        toast(res.message || 'Reminder sent.', false);
+      }).catch(function (e) {
+        toast(e.message, true);
+      }).then(function () {
+        if (btn) { btn.disabled = false; btn.textContent = 'Send reminder'; }
+      });
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Leave                                                             */
+    /* ---------------------------------------------------------------- */
+
+    function renderLeave() {
+      var d = STATE.data;
+      var mine = (d.leave && d.leave.mine) || [];
+      var manager = (d.leave && d.leave.managerEmail) || '';
+      var today = todayIso();
+
+      var html = '<div class="section-head"><div><h2>Leave</h2><p>' +
+        (manager ? 'Requests go to ' + esc(manager) + '.' : 'An admin will review your request.') +
+        '</p></div></div>' +
+        '<div class="card">' +
+          '<div class="name" style="margin-top:0">Apply for leave</div>' +
+          '<form id="leaveForm" novalidate>' +
+            '<div class="two">' +
+              '<div><label for="lFrom">First day</label><input id="lFrom" name="from" type="date" value="' + today + '" required></div>' +
+              '<div><label for="lTo">Last day</label><input id="lTo" name="to" type="date" value="' + today + '" required></div>' +
+            '</div>' +
+            '<label for="lType">Type</label><select id="lType" name="type">' +
+              ['Casual', 'Sick', 'Unpaid', 'Other'].map(function (t) {
+                return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+              }).join('') + '</select>' +
+            '<label for="lReason">Reason</label><textarea id="lReason" name="reason" maxlength="300" required placeholder="Short reason for the request"></textarea>' +
+            '<div class="note" id="lDays"></div>' +
+            '<div class="err" id="leaveErr" role="alert"></div>' +
+            '<button type="submit" class="btn primary wide">Send request</button>' +
+          '</form>' +
+        '</div>';
+
+      html += '<div class="section-head" style="margin-top:16px"><div><h2>My requests</h2></div></div>';
+      html += mine.length ? mine.map(leaveCard).join('')
+        : '<div class="empty"><b>No requests yet</b><p>Your leave history will appear here.</p></div>';
+      content.innerHTML = html;
+
+      var from = document.getElementById('lFrom');
+      var to = document.getElementById('lTo');
+      function syncDays() {
+        var n = dayCount(from.value, to.value);
+        document.getElementById('lDays').textContent = n > 0 ? n + ' day' + (n === 1 ? '' : 's') : '';
+      }
+      from.addEventListener('change', syncDays);
+      to.addEventListener('change', syncDays);
+      syncDays();
+    }
+
+    function leaveCard(r) {
+      return '<article class="card">' +
+        '<div class="row">' + leavePill(r.status) +
+          '<span class="cycle">' + esc(r.days) + ' day' + (r.days === 1 ? '' : 's') + '</span></div>' +
+        '<div class="name" style="font-size:13px">' + esc(r.fromLabel) + ' → ' + esc(r.toLabel) + '</div>' +
+        '<div class="meta">' + esc(r.type) + ' · requested ' + esc(r.createdIso ? r.createdIso.slice(0, 10) : '') + '</div>' +
+        (r.reason ? '<div class="reason">' + esc(r.reason) + '</div>' : '') +
+        (r.decisionNote ? '<div class="note">Manager note: ' + esc(r.decisionNote) + '</div>' : '') +
+        (r.status === 'PENDING'
+          ? '<div class="actions"><button type="button" class="btn danger" data-action="withdraw" data-id="' +
+            esc(r.id) + '">Withdraw</button></div>'
+          : '') +
+        '<div class="err" role="alert"></div>' +
+        '</article>';
+    }
+
+    function submitLeave(form) {
+      var err = document.getElementById('leaveErr');
+      var from = form.elements.from.value;
+      var to = form.elements.to.value;
+      var type = form.elements.type.value;
+      var reason = form.elements.reason.value.trim();
+      function fail(message) {
+        if (err) { err.textContent = message; err.className = 'err show'; }
+        toast(message, true);
+      }
+      if (err) err.className = 'err';
+      if (!from || !to) return fail('Choose both dates.');
+      if (to < from) return fail('The last day cannot be before the first day.');
+      if (reason.length < 3) return fail('Add a short reason.');
+      if (dayCount(from, to) > 90) return fail('A single request cannot be longer than 90 days.');
+
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      call('applyLeave', { fromIso: from, toIso: to, type: type, reason: reason }).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not send.');
+        toast(res.message || 'Leave request sent.', false);
+        load();
+      }).catch(function (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Send request'; }
+        fail(e.message);
+      });
+    }
+
+    function withdraw(requestId, cardEl) {
+      var btn = cardEl.querySelector('[data-action="withdraw"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Withdrawing…'; }
+      call('cancelLeave', requestId).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not withdraw.');
+        toast(res.message || 'Request withdrawn.', false);
+        load();
+      }).catch(function (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Withdraw'; }
+        toast(e.message, true);
+      });
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Team leave approvals                                              */
+    /* ---------------------------------------------------------------- */
+
+    function renderApprovals() {
+      var d = STATE.data;
+      var pending = (d.leave && d.leave.approvals) || [];
+      var decided = (d.leave && d.leave.decided) || [];
+
+      var html = '<div class="section-head"><div><h2>Team leave</h2><p>' +
+        (d.admin ? 'Every pending request across the company.' : 'Pending requests from your team.') +
+        '</p></div></div>';
+      html += pending.length ? pending.map(approvalCard).join('')
+        : '<div class="empty"><b>No pending requests</b><p>Your team has nothing waiting for approval.</p></div>';
+
+      if (decided.length) {
+        html += '<div class="section-head" style="margin-top:16px"><div><h2>Recently decided</h2></div></div>';
+        html += decided.map(leaveCard).join('');
+      }
+      content.innerHTML = html;
+    }
+
+    function approvalCard(r) {
+      return '<article class="card" data-approval="' + esc(r.id) + '">' +
+        '<div class="row">' + leavePill(r.status) +
+          '<span class="cycle">' + esc(r.days) + ' day' + (r.days === 1 ? '' : 's') + '</span></div>' +
+        '<div class="name" style="font-size:13px">' + esc(r.fromLabel) + ' → ' + esc(r.toLabel) + '</div>' +
+        '<div class="employee">' + esc(r.name) + ' · ' + esc(r.email) + '</div>' +
+        '<div class="meta">' + esc(r.type) + '</div>' +
+        (r.reason ? '<div class="reason">' + esc(r.reason) + '</div>' : '') +
+        '<label for="note-' + esc(r.id) + '">Decision note <span class="hint">(required to reject)</span></label>' +
+        '<input id="note-' + esc(r.id) + '" name="note" type="text" maxlength="300" placeholder="Optional when approving">' +
+        '<div class="err" role="alert"></div>' +
+        '<div class="actions">' +
+          '<button type="button" class="btn ok" data-action="approve" data-id="' + esc(r.id) + '">Approve</button>' +
+          '<button type="button" class="btn danger" data-action="reject" data-id="' + esc(r.id) + '">Reject</button>' +
+        '</div>' +
+        '</article>';
+    }
+
+    function decide(requestId, verdict, cardEl) {
+      var noteEl = cardEl.querySelector('input[name="note"]');
+      var note = noteEl ? noteEl.value.trim() : '';
+      var err = cardEl.querySelector('.err');
+      if (verdict === 'REJECTED' && note.length < 3) {
+        if (err) { err.textContent = 'Add a short reason before rejecting.'; err.className = 'err show'; }
+        toast('Add a short reason before rejecting.', true);
+        return;
+      }
+      if (err) err.className = 'err';
+      var buttons = cardEl.querySelectorAll('button');
+      Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+      call('decideLeave', requestId, verdict, note).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not save.');
+        toast(res.message || 'Leave request updated.', false);
+        load();
+      }).catch(function (e) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        if (err) { err.textContent = e.message; err.className = 'err show'; }
+        toast(e.message, true);
+      });
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Read-only sheets                                                  */
+    /* ---------------------------------------------------------------- */
+
+    function freqLabel(f) {
+      var s = String(f || '').toUpperCase();
+      if (s === 'DAILY') return 'Daily';
+      if (s === '7') return 'Weekly';
+      if (s === '15') return 'Every 15 days';
+      if (s === '30') return 'Every 30 days';
+      return s || '—';
+    }
+
+    function sheetTitle() {
+      return 'Sheets';
+    }
+
+    function sheetSubtitle() {
+      var d = STATE.data;
+      if (d.role === 'ADMIN') return 'Every row in the ledger, read-only. Open ↗ shows the raw tab.';
+      if (d.role === 'MANAGER') return 'Your team’s rows, read-only. Open ↗ shows the raw tab.';
+      return 'Only the rows that belong to you, read-only. Open ↗ shows the raw tab.';
+    }
+
+    function sheetList(kinds) {
+      var d = STATE.data;
+      var labels = {
+        dashboard: d.role === 'ADMIN' ? 'Company dashboard' : 'Manager dashboard',
+        review: 'Review queue',
+        tasks: 'Tasks',
+        cycles: 'Cycles',
+        leave: 'Leave'
+      };
+      var desc = {
+        dashboard: 'KPIs and overdue work for this scope',
+        review: 'Active cycles and manager acknowledgements',
+        tasks: 'Task definitions, owners and frequency',
+        cycles: 'One row per cycle instance',
+        leave: 'Leave requests and decisions'
+      };
+      return '<div class="sheet-list">' + kinds.map(function (k) {
+        return '<div class="sheet-row" aria-current="' + (STATE.sheetKind === k) + '">' +
+          '<button type="button" class="sheet-pick" data-sheet="' + k + '">' +
+            '<b>' + esc(labels[k]) + '</b><span>' + esc(desc[k]) + ' · read-only</span></button>' +
+          '<button type="button" class="btn small" data-open="' + k + '" ' +
+            'title="Open the read-only spreadsheet tab">Open ↗</button>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    function sheetHead() {
+      var admin = STATE.data && STATE.data.role === 'ADMIN';
+      return '<div class="section-head"><div><h2>' + esc(sheetTitle()) + '</h2><p>' +
+        esc(sheetSubtitle()) + '</p></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end">' +
+        (admin ? '<button type="button" class="btn" data-action="hideTabs">Hide tabs</button>' : '') +
+        '<button type="button" class="btn" data-action="refreshSheets">Refresh</button></div></div>';
+    }
+
+    function sheetStat(label, value) {
+      return '<div class="stat"><span>' + esc(label) + '</span><b>' + esc(value || 0) + '</b></div>';
+    }
+
+    function sheetTable(headers, rows) {
+      var body = rows.length ? rows.map(function (r) {
+        return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+      }).join('') : '<tr><td colspan="' + headers.length + '"><div class="empty" style="padding:18px">No rows yet.</div></td></tr>';
+      return '<div class="sheet-wrap"><table class="sheet"><thead><tr>' +
+        headers.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' + body + '</tbody></table></div>';
+    }
+
+    function sheetReviewRow(c) {
+      return [
+        esc(c.taskName),
+        esc(c.employee),
+        '#' + esc(c.cycleNo),
+        esc(c.dueLabel) + (c.overdue ? ' <span class="cycle">(' + esc(c.overdueLabel) + ')</span>' : ''),
+        statusPill(c.status),
+        esc(c.ackLabel || '—')
+      ];
+    }
+
+    function sheetDashboard() {
+      var s = STATE.sheetData.stats || {};
+      var html = '<div class="stats">' +
+        sheetStat('Active cycles', s.active) +
+        sheetStat('Overdue', s.overdue) +
+        sheetStat('Not acknowledged', s.unacked) +
+        sheetStat('Completed (all)', s.completed) +
+        sheetStat('Leave pending', s.leavePending) +
+        '</div>';
+
+      var overdue = (STATE.sheetData.cycles || []).filter(function (c) { return c.overdue; }).slice(0, 10);
+      html += '<div class="section-head" style="margin-top:14px"><div><h2>Overdue now</h2><p>' +
+        (STATE.data.role === 'ADMIN' ? 'Company-wide, past the grace time.' : 'Your team, past the grace time.') +
+        '</p></div></div>';
+      html += overdue.length
+        ? sheetTable(['Task', 'Employee', 'Cycle', 'Due', 'Status', 'Acknowledged'], overdue.map(sheetReviewRow))
+        : '<div class="empty"><b>Nothing overdue</b><p>Every active cycle is inside its grace window.</p></div>';
+      return html;
+    }
+
+    function sheetBody(kind) {
+      var data = STATE.sheetData;
+
+      if (kind === 'dashboard') return sheetDashboard();
+
+      if (kind === 'review') {
+        var active = (data.cycles || []).filter(function (c) { return c.active; });
+        active.sort(function (a, b) {
+          if (!!a.overdue !== !!b.overdue) return a.overdue ? -1 : 1;
+          var ad = a.dueIso ? new Date(a.dueIso).getTime() : 0;
+          var bd = b.dueIso ? new Date(b.dueIso).getTime() : 0;
+          return ad - bd;
+        });
+        return active.length
+          ? sheetTable(['Task', 'Employee', 'Cycle', 'Due', 'Status', 'Acknowledged'], active.map(sheetReviewRow))
+          : '<div class="empty"><b>No active cycles</b><p>Nothing is open for this scope.</p></div>';
+      }
+
+      if (kind === 'tasks') {
+        var tasks = (data.tasks || []).map(function (t) {
+          return [
+            esc(t.name),
+            esc(t.employee || t.email),
+            esc(freqLabel(t.frequency)),
+            esc(t.dueTime || '—'),
+            t.active ? 'Active' : 'Paused',
+            esc(t.ownerManager || '—'),
+            esc(t.proofLabel || '—')
+          ];
+        });
+        return sheetTable(['Task', 'Employee', 'Frequency', 'Due', 'Status', 'Manager', 'Proof'], tasks);
+      }
+
+      if (kind === 'cycles') {
+        var cycles = (data.cycles || []).map(function (c) {
+          var proof = c.ticket || c.proof || '';
+          var cell = proof ? esc(proof.length > 60 ? proof.slice(0, 57) + '…' : proof)
+            : '<span class="cycle">—</span>';
+          if (proof.length > 60) cell = '<span title="' + esc(proof) + '">' + cell + '</span>';
+          if (!proof && c.proofUrl) {
+            cell = '<a href="' + esc(c.proofUrl) + '" target="_blank" rel="noopener">Proof</a>';
+          }
+          return [
+            esc(c.taskName),
+            esc(c.employee),
+            '#' + esc(c.cycleNo),
+            statusPill(c.status),
+            esc(c.dueLabel),
+            esc(c.completedLabel || '—'),
+            cell
+          ];
+        });
+        return sheetTable(['Task', 'Employee', 'Cycle', 'Status', 'Due', 'Completed', 'Ticket / proof'], cycles);
+      }
+
+      if (kind === 'leave') {
+        var leave = (data.leave || []).map(function (r) {
+          return [
+            esc(r.name),
+            esc(r.fromLabel),
+            esc(r.toLabel),
+            esc(r.days),
+            esc(r.type),
+            leavePill(r.status),
+            esc(r.managerEmail || '—'),
+            esc(r.decidedLabel || '—')
+          ];
+        });
+        return sheetTable(['Employee', 'From', 'To', 'Days', 'Type', 'Status', 'Manager', 'Decided'], leave);
+      }
+
+      return '';
+    }
+
+    function renderSheets() {
+      var d = STATE.data;
+      var isManager = d.role === 'MANAGER' || d.role === 'ADMIN';
+      var kinds = isManager ? ['dashboard', 'review', 'tasks', 'cycles', 'leave'] : ['tasks', 'cycles', 'leave'];
+      if (kinds.indexOf(STATE.sheetKind) < 0) STATE.sheetKind = kinds[0];
+      var head = sheetHead();
+
+      if (!STATE.sheetData) {
+        if (STATE.sheetError) {
+          content.innerHTML = head + '<div class="empty"><b>Sheets unavailable</b><p>' +
+            esc(STATE.sheetError) + '</p><div class="actions" style="justify-content:center">' +
+            '<button type="button" class="btn" data-action="refreshSheets">Try again</button></div></div>';
+          return;
+        }
+        content.innerHTML = head + '<div class="skeleton"></div><div class="skeleton"></div>';
+        if (!STATE.sheetLoading) loadSheets();
+        return;
+      }
+
+      var list = sheetList(kinds);
+
+      var note = 'Showing latest ' + STATE.sheetData.cycles.length + ' of ' + STATE.sheetData.totalCycles +
+        ' cycles and ' + STATE.sheetData.leave.length + ' of ' + STATE.sheetData.totalLeave +
+        ' leave rows. Generated ' + STATE.sheetData.generatedLabel +
+        '. This table stays scoped to your role. Open ↗ shows the real tab, which is still read-only but can contain every row; hide it again from the tab menu.';
+
+      content.innerHTML = head + list + sheetBody(STATE.sheetKind) +
+        '<div class="sheet-note">' + esc(note) + '</div>';
+    }
+
+    function openSheetTab(kind) {
+      call('openWorkspaceSheet', kind).then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Could not open that tab.');
+        toast('Opened ' + res.sheet + ' — still read-only. The raw tab can show every row; this table stays scoped.');
+      }).catch(function (err) { toast(err.message || 'Could not open that tab.', true); });
+    }
+
+    function loadSheets() {
+      if (STATE.sheetLoading) return;
+      STATE.sheetLoading = true;
+      STATE.sheetError = '';
+      content.innerHTML = sheetHead() + '<div class="skeleton"></div><div class="skeleton"></div>';
+      call('getSheetBundle').then(function (res) {
+        STATE.sheetLoading = false;
+        if (!res || !res.ok) {
+          STATE.sheetData = null;
+          STATE.sheetError = (res && res.error) || 'Could not load sheets.';
+          if (STATE.section === 'sheets') renderSheets();
+          return;
+        }
+        STATE.sheetData = res;
+        if (STATE.section === 'sheets') renderSheets();
+      }).catch(function (err) {
+        STATE.sheetLoading = false;
+        STATE.sheetData = null;
+        STATE.sheetError = err.message || 'Could not load sheets.';
+        if (STATE.section === 'sheets') renderSheets();
+      });
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Admin                                                             */
+    /* ---------------------------------------------------------------- */
+
+    function renderAdmin() {
+      var d = STATE.data;
+      var c = d.counts || {};
+
+      if (d.role === 'MANAGER') {
+        content.innerHTML = '<div class="section-head"><div><h2>Team admin</h2><p>Assign work and keep your team’s task definitions up to date.</p></div></div>' +
+          '<div class="card">' +
+            '<div class="name" style="margin-top:0">Assign & manage tasks</div>' +
+            '<div class="meta">Create recurring tasks for your team, edit or pause their definitions and set the owner manager. Holidays and config stay with an admin.</div>' +
+            '<div class="actions"><button type="button" class="btn primary" data-action="openManage">Open task manager</button></div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<div class="name" style="margin-top:0">Read-only sheets</div>' +
+            '<div class="meta">Every tab is locked. Manual edits are reverted and logged in AuditLog. ' +
+            'Use the side panels for every change.</div>' +
+          '</div>';
+        return;
+      }
+
+      var html = '<div class="section-head"><div><h2>Admin</h2><p>You can see and act on everything.</p></div></div>' +
+        '<div class="stats">' +
+          '<div class="stat"><span>My tasks</span><b>' + esc(c.tasks || 0) + '</b></div>' +
+          '<div class="stat"><span>Active cycles</span><b>' + esc(c.review || 0) + '</b></div>' +
+          '<div class="stat"><span>Leave to decide</span><b>' + esc(c.approvals || 0) + '</b></div>' +
+          '<div class="stat"><span>My pending leave</span><b>' + esc(c.leavePending || 0) + '</b></div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="name" style="margin-top:0">People & roles</div>' +
+          '<div class="meta">Add people, assign ADMIN / MANAGER / EMPLOYEE, set reporting lines.</div>' +
+          '<div class="actions"><button type="button" class="btn primary" data-action="openAdmin">Open admin panel</button></div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="name" style="margin-top:0">Tasks & settings</div>' +
+          '<div class="meta">Create or edit tasks, holidays and config values without touching a sheet.</div>' +
+          '<div class="actions"><button type="button" class="btn primary" data-action="openManage">Manage tasks & settings</button></div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="name" style="margin-top:0">Read-only sheets</div>' +
+          '<div class="meta">Every tab is locked. Manual edits are reverted and logged in AuditLog. ' +
+          'Use the side panels for every change.</div>' +
+        '</div>';
+      content.innerHTML = html;
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Events + boot                                                     */
+    /* ---------------------------------------------------------------- */
+
+    document.getElementById('tabs').addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('[data-section]') : null;
+      if (!btn) return;
+      STATE.section = btn.getAttribute('data-section');
+      renderTabs();
+      renderSection();
+    });
+
+    content.addEventListener('click', function (e) {
+      var target = e.target.closest
+        ? e.target.closest('[data-action], [data-filter], [data-rfilter], [data-rsfilter], [data-sheet], [data-open]')
+        : null;
+      if (!target) return;
+
+      var openKind = target.getAttribute('data-open');
+      if (openKind) {
+        openSheetTab(openKind);
+        return;
+      }
+
+      var rsFilter = target.getAttribute('data-rsfilter');
+      if (rsFilter) {
+        STATE.rsFilter = rsFilter;
+        renderReviewStatus();
+        return;
+      }
+
+      var sheetKind = target.getAttribute('data-sheet');
+      if (sheetKind) {
+        STATE.sheetKind = sheetKind;
+        renderSheets();
+        return;
+      }
+
+      var filter = target.getAttribute('data-filter');
+      if (filter) {
+        STATE.filter = filter;
+        renderTasks();
+        return;
+      }
+      var rfilter = target.getAttribute('data-rfilter');
+      if (rfilter) {
+        STATE.reviewFilter = rfilter;
+        renderReview();
+        return;
+      }
+
+      var action = target.getAttribute('data-action');
+      var cardEl = target.closest('article') || target.closest('.card');
+      var cycleId = target.getAttribute('data-cycle');
+      var id = target.getAttribute('data-id');
+
+      if (action === 'complete' && cardEl) submitTask(cardEl, cycleId);
+      else if (action === 'ack' && cardEl) ackReview(cardEl, cycleId);
+      else if (action === 'remind' && cardEl) remind(cardEl, cycleId);
+      else if (action === 'withdraw' && cardEl) withdraw(id, cardEl);
+      else if (action === 'approve' && cardEl) decide(id, 'APPROVED', cardEl);
+      else if (action === 'reject' && cardEl) decide(id, 'REJECTED', cardEl);
+      else if (action === 'refreshSheets') {
+        STATE.sheetData = null;
+        STATE.sheetError = '';
+        loadSheets();
+      }
+      else if (action === 'hideTabs') {
+        call('hideWorkspaceTabs').then(function (res) {
+          if (!res || !res.ok) throw new Error((res && res.error) || 'Could not hide the tabs.');
+          toast(res.message || 'Data tabs hidden.');
+        }).catch(function (err) { toast(err.message || 'Could not hide the tabs.', true); });
+      }
+      // A second sidebar cannot replace the open one (Sheets drops the call),
+      // so the nested panels open as modal dialogs over this sidebar instead.
+      else if (action === 'refreshWorkspace') load();
+      else if (action === 'openAdmin') call('openAdminDialog').then(function (res) {
+        if (res && !res.ok) throw new Error(res.error || 'Could not open the admin panel.');
+      }).catch(function (err) { toast(err.message, true); });
+      else if (action === 'openManage') call('openManageDialog').then(function (res) {
+        if (res && !res.ok) throw new Error(res.error || 'Could not open the task manager.');
+      }).catch(function (err) { toast(err.message, true); });
+    });
+
+    content.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var form = e.target;
+      if (!form || !form.getAttribute) return;
+      if (form.id === 'leaveForm') submitLeave(form);
+      else if (form.getAttribute('data-form') === 'task') {
+        submitTask(form.closest('article'), form.getAttribute('data-cycle'));
+      }
+    });
+
+    var inputHandler = function (e) {
+      var el = e.target;
+      if (!el || !el.getAttribute) return;
+      if (el.getAttribute('aria-invalid') === 'true') el.removeAttribute('aria-invalid');
+    };
+    content.addEventListener('input', inputHandler);
+
+    function load() {
+      content.setAttribute('aria-busy', 'true');
+      return call('getWorkspace').then(render).catch(function (err) {
+        render({ ok: false, error: err.message || 'Could not load your workspace.' });
+      });
+    }
+
+    load();
+  </script>
+</body>
+</html>
