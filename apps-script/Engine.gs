@@ -315,6 +315,22 @@ function validateInput_(task, p) {
   return { ticket: safeText_(rawTicket, 60), note: safeText_(rawNote, 200), url: rawUrl };
 }
 
+/**
+ * A ticket is evidence for one cycle only. Returns the earlier cycle that already
+ * carries this ticket, or null when it is unused.
+ */
+function ticketAlreadyUsed_(ticket, cycleId) {
+  const want = String(ticket || '').trim().toUpperCase();
+  if (!want) return null;
+  const all = cycles_();
+  for (let i = 0; i < all.length; i++) {
+    const c = all[i];
+    if (c.id === String(cycleId)) continue;
+    if (String(c.ticketId || '').trim().toUpperCase() === want) return c;
+  }
+  return null;
+}
+
 function completeCycle_(cycleId, p) {
   p = p || {};
   const lock = LockService.getScriptLock();
@@ -353,6 +369,24 @@ function completeCycle_(cycleId, p) {
     }
 
     const input = validateInput_(task, p);
+
+    // Duplicate-proof guard: the same ticket cannot stand as proof twice. The
+    // attempt is recorded before the refusal so managers can see what was tried.
+    const reused = ticketAlreadyUsed_(input.ticket, cycle.id);
+    if (reused) {
+      const priorTask = taskMap_()[reused.taskId];
+      const where = priorTask && priorTask.id !== task.id ? priorTask.name : 'this task';
+      const when = fulfilledWhen_(reused);
+      audit_(email, roleOf_(email), 'PROOF_DUPLICATE_BLOCKED', 'Cycle', cycle.id, '',
+        'ticket=' + input.ticket + '; already used on ' + reused.id + ' (task ' + reused.taskId +
+        ', cycle #' + reused.cycleNo + ')', p.submissionId || '', 'sidebar');
+      return {
+        ok: false,
+        error: 'Ticket ' + input.ticket + ' was already used for ' + where +
+          (when ? ' on ' + when : '') + '. Each cycle needs its own ticket reference.'
+      };
+    }
+
     const now = new Date();
     const late = Math.max(0, Math.round((now.getTime() - cycle.dueAt.getTime()) / 60000));
     const sh = sheet_(S.CYCLES);
@@ -402,6 +436,11 @@ function completeCycle_(cycleId, p) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function fulfilledWhen_(c) {
+  const d = c.completedAt || c.scheduledDue;
+  return d ? fmtDT_(d) : '';
 }
 
 function suppressAlerts_(cycleId) {

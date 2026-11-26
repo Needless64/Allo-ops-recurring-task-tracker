@@ -188,6 +188,7 @@ Yes, with two caveats that are properties of Google Sheets rather than gaps in t
 | Last active admin protected | Demote/remove refused | Covered |
 | Manager scope = reporting line + owned tasks | Union of `People.ManagerEmail` and `TaskMaster.OwnerManager` | Covered |
 | All edits happen through the side panels | Every write goes through a panel endpoint | Covered |
+| No duplicate proof | A ticket already recorded on an earlier cycle is refused, attempt logged as `PROOF_DUPLICATE_BLOCKED` | Covered |
 | Production settings | `DEMO_MODE=FALSE`, `ALLOW_IDENTITY_FALLBACK=FALSE` | Config values, set before go-live |
 | No new OAuth scopes | `spreadsheets`, `script.container.ui`, `script.send_mail`, `script.scriptapp`, `userinfo.email` | Covered |
 

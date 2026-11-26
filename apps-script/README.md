@@ -198,12 +198,18 @@ next working window (daily) or 24h (longer cycles); quiet hours prevent 23:00 pi
 | Employee reminder | 20:00 if still open | 19:00 if still open |
 | Leadership escalation | next working day 11:00 | due + 24h |
 
+**Duplicate proof.** `TicketID` is the evidence for one cycle: `completeCycle_` scans `Cycles` for the same
+ticket (any task, any earlier cycle) and refuses the save. The refusal is audited with the ticket and the
+cycle that already owns it, so "we tried it and it was blocked" is a row in `AuditLog`, not a claim.
+
 **Test 8 — no duplicate work.** Menu → **Test tools → Run tick 3x and show counts**. Expect
 `delta cycles 0`, `delta alerts 0`, `delta sent 0`. Cycle creation is keyed by `TaskID|due date` and guarded
 by a script lock and the one-live-cycle invariant; emails are keyed in `AlertLedger` before sending.
 
 Extra negative tests worth showing: a second account tries to complete someone else's task (blocked);
-bad ticket format (inline error); double submit (blocked, "already completed"); expired/used ack link
+bad ticket format (inline error); a ticket ID that was already recorded on an earlier cycle is refused with
+`Ticket OPS-10234 was already used for …` and the attempt is written to `AuditLog` as
+`PROOF_DUPLICATE_BLOCKED`; double submit (blocked, "already completed"); expired/used ack link
 (`Link not usable`); manual edit of any tab is reverted and logged as `SHEET_EDIT_BLOCKED`; a manager tries
 to assign a task outside their team (rejected); an employee tries to open the admin panel (rejected).
 
